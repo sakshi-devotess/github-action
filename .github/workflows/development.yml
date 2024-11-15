@@ -35,17 +35,25 @@ on:
         required: true
         type: string
         description: "Name for the pm2 process"
+      service_type:
+        required: true
+        type: string
+        default: "frontend"
+        description: "Type of service to deploy (front or back)"
     secrets:
       password:
         required: true
       dotenv_key:
         required: true
+      dotenv_me:
+        required: false 
 
 jobs:
-  deploy:
-    uses: 'sakshi-devotess/github-action/.github/workflows/deploy.yml@main'
+  deploy-front:
+    if: ${{ inputs.service_type == 'frontend' }}
+    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'
     with:
-      hostname: ${{ inputs.password }}
+      hostname: ${{ inputs.hostname }}
       user: ${{ inputs.user }}
       target: ${{ inputs.target }}
       destination: ${{ inputs.destination }}
@@ -54,4 +62,19 @@ jobs:
     secrets:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }}
+
+  deploy-back:
+    if: ${{ inputs.service_type == 'backend' }}
+    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
+    with:
+      hostname: ${{ inputs.hostname }}
+      user: ${{ inputs.user }}
+      target: ${{ inputs.target }}
+      destination: ${{ inputs.destination }}
+      fingerprint: ${{ inputs.fingerprint }}
+      pm2_name: ${{ inputs.pm2_name }}
+    secrets:
+      password: ${{ secrets.password }}
+      dotenv_key: ${{ secrets.dotenv_key }}
+      dotenv_me: ${{ secrets.dotenv_me }}
   

@@ -1,0 +1,89 @@
+name: Glesys deploy
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        required: true
+      hostname:
+        type: string
+        required: true
+      user:
+        type: string
+        required: false
+        default: 'deploy'
+      fingerprint:
+        type: string
+        required: true
+      destination:
+        type: string
+        required: true
+      mode:
+        type: string
+        required: true
+      pm2_name:
+        type: string
+        required: true
+    secrets:
+      password:
+        required: true
+      dotenv_key:
+        required: true
+      dotenv_me:
+          required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js 20
+        id: install-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.6.1
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Make a build
+        run: npm run build
+        env:
+          DOTENV_KEY: ${{ secrets.DOTENV_KEY }}
+
+      - name: Activate ssh-agent
+        run: |
+          eval "$( ssh-agent )"
+          printenv|egrep -e SSH_AUTH_SOCK -e SSH_AGENT_PID >> $GITHUB_ENV
+          mkdir ~/.ssh
+          echo "${{ inputs.FINGERPRINT }}" >> ~/.ssh/known_hosts
+
+      - name: Compress Repository
+        run: |
+          find . -type f \( -not -path './node_modules/*' -a -not -path './.git*' \) -exec zip repo.zip {} + 
+
+      - name: Cleanup/delete old files and create empty one instead
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -v -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "rm -rf ${{ inputs.DESTINATION }} && mkdir ${{ inputs.DESTINATION }}"
+
+      - name: Copy build files to the Glesys server using scp and sshpass
+        run: sshpass -p ${{ secrets.PASSWORD }} scp -o StrictHostKeyChecking=no -r ./repo.zip ${{ inputs.USER }}@${{ inputs.HOSTNAME }}:${{ inputs.DESTINATION }}
+
+      - name: Glesys server, unzip the compressed file
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && unzip -o repo.zip && rm repo.zip"
+
+      - name: Glesys server, install dependencies
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && /usr/bin/npm install"
+
+      - name: Glesys server, fetch env
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && source ~/.bashrc && /usr/bin/npx dotenv-vault@latest pull ${{ inputs.MODE }} .env --dotenvMe=${{ secrets.DOTENV_ME }}"
+
+      - name: Glesys server, run migrations
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} &&  source ~/.bashrc && /usr/bin/npm run migration:run"
+
+      - name: Glesys server, restart PM2
+        run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }} && cp .env dist/.env && /usr/bin/pm2 restart ${{ inputs.PM2_NAME }}"

@@ -23,11 +23,14 @@ on:
         required: false
         type: string
         description: "SSH fingerprint"
-    secrets:
       password:
-        required: true
+        required: false
+        type: string
+        description: "Password for the server"
       dotenv_key:
-        required: true
+        required: false
+        type: string
+        description: "Key for the .env file"
 
 jobs:
   deploy:
@@ -39,6 +42,6 @@ jobs:
       destination: '~/repos/SellamigoReact'
       fingerprint: '188.126.67.247 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCN23zPW1HrVGv4pLb2TQnKbeuh/D5ih1BPkZ+i+epLCP3Ic+t9zBIZ5G1q8sgZ1egsoU99jVKzYXHn/hQ+DCFF8pHjd62FCOWBS/bObURoZ7UNOeaqT054ejFZ30GbVEK6bzifoZN4qhz7KuOEB/tji2v6MQgMoxjnwt0owLdstw+EuOhzIfBfQ4zckxRP/vX4oJjulZNsy+ao1bCTDPQ1h3sm3ok/NztAnQ2lK1qnVZOgka+2VC8P8MdhK5HwV9kAKrBphajfokAaoXqrflxVBXCnW95WjLoJx9HFaMrIRFaKpws+A6Uw52XA/twFnFAlZRMuj5Nb1u3/S8LX8VXvXvBvr2vAc5Vr5PS6zxvTUzhYCb8QX1Nptu+2Yx9cAwAoTkrOuVA6/fCRg1FgLj3K32kb4xXq9g10/rRuc5FyPER0o4r0q/ym44bMWbFzG3lLW4bFA833g8mTksr/uJxkKJA7fX826+l2bDQJhvOVzICkqrULZG5+H1vRLVa/CU='
     secrets:
-      password: ${{ secrets.STG_PASSWORD }}
-      dotenv_key: ${{ secrets.STG_DOTENV_KEY }}
+      password: ${{ inputs.password }}
+      dotenv_key: ${{ inputs.dotenv_key }}
   

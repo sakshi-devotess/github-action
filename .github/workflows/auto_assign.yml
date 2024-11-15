@@ -1,7 +1,5 @@
 name: 'Auto Assign'
 on:
-  pull_request:
-    types: [opened, ready_for_review, reopened, edited, synchronize]
   workflow_call:
     inputs:
       reviewers:
@@ -16,9 +14,6 @@ on:
         required: false
         type: string
         description: "Keywords to skip"
-    secrets:
-      github_token:
-        required: true
 
 jobs:
   add-reviews:

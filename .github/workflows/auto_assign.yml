@@ -2,6 +2,23 @@ name: 'Auto Assign'
 on:
   pull_request:
     types: [opened, ready_for_review, reopened, edited, synchronize]
+  workflow_call:
+    inputs:
+      reviewers:
+        required: false
+        type: string
+        description: "Comma-separated list of reviewers"
+      numberOfReviewers:
+        required: false
+        type: number
+        description: "Number of reviewers to add"
+      skipKeywords:
+        required: false
+        type: string
+        description: "Keywords to skip"
+    secrets:
+      github_token:
+        required: true
 
 jobs:
   add-reviews:

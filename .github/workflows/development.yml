@@ -1,17 +1,42 @@
 name: Deploy to Glesys STAGE
+
 on:
-  push:
-    branches: [development]
-  workflow_dispatch:
-    branches: [development]
+  workflow_call:
+    inputs:
+      hostname:
+        required: true
+        type: string
+        description: "The hostname for the server"
+      user:
+        required: true
+        type: string
+        description: "The user for SSH"
+      target:
+        required: true
+        type: string
+        description: "The target environment"
+      destination:
+        required: true
+        type: string
+        description: "Destination path on the server"
+      fingerprint:
+        required: false
+        type: string
+        description: "SSH fingerprint"
+    secrets:
+      password:
+        required: true
+      dotenv_key:
+        required: true
+
 jobs:
   deploy:
-    uses: 'Sellamigo/sellamigo-frontend/.github/workflows/deploy.yml@development'
+    uses: 'sakshi-devotess/github-action/.github/workflows/deploy.yml@development'
     with:
-      hostname: '188.126.67.247'
-      user: 'jaradat'
-      target: 'staging'
-      destination: '~/repos/SellamigoReact'
+      hostname: ${{ inputs.hostname }}
+      user: ${{ inputs.user }}
+      target: ${{ inputs.target }}
+      destination: ${{ inputs.destination }}
       fingerprint: '188.126.67.247 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCN23zPW1HrVGv4pLb2TQnKbeuh/D5ih1BPkZ+i+epLCP3Ic+t9zBIZ5G1q8sgZ1egsoU99jVKzYXHn/hQ+DCFF8pHjd62FCOWBS/bObURoZ7UNOeaqT054ejFZ30GbVEK6bzifoZN4qhz7KuOEB/tji2v6MQgMoxjnwt0owLdstw+EuOhzIfBfQ4zckxRP/vX4oJjulZNsy+ao1bCTDPQ1h3sm3ok/NztAnQ2lK1qnVZOgka+2VC8P8MdhK5HwV9kAKrBphajfokAaoXqrflxVBXCnW95WjLoJx9HFaMrIRFaKpws+A6Uw52XA/twFnFAlZRMuj5Nb1u3/S8LX8VXvXvBvr2vAc5Vr5PS6zxvTUzhYCb8QX1Nptu+2Yx9cAwAoTkrOuVA6/fCRg1FgLj3K32kb4xXq9g10/rRuc5FyPER0o4r0q/ym44bMWbFzG3lLW4bFA833g8mTksr/uJxkKJA7fX826+l2bDQJhvOVzICkqrULZG5+H1vRLVa/CU='
     secrets:
       password: ${{ secrets.STG_PASSWORD }}

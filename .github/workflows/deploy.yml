@@ -19,6 +19,9 @@ on:
             destination:
                 type: string
                 required: true
+            pm2_name:
+                type: string
+                required: true
         secrets:
             dotenv_key:
                 required: true
@@ -76,4 +79,4 @@ jobs:
                sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} " \
                     mv ${{ inputs.DESTINATION }}/release ${{ inputs.DESTINATION }}/release.old && \
                     mv ${{ inputs.DESTINATION }}/release.new ${{ inputs.DESTINATION }}/release && \
-                    cd ${{ inputs.DESTINATION }}/release && pm2 restart SellamigoFE"
+                    cd ${{ inputs.DESTINATION }}/release && pm2 restart ${{ inputs.PM2_NAME }}"

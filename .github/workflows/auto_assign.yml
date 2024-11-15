@@ -1,19 +1,15 @@
-# .github/workflows/auto_assign.yml
 name: 'Auto Assign'
-
 on:
   workflow_call:
-    inputs:
-      configuration_path:
-        required: true
-        type: string
 
 jobs:
   add-reviews:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Run auto-assign action
-        uses: kentaro-m/auto-assign-action@v1.2.5
+      - uses: kentaro-m/auto-assign-action@v1.2.5
         with:
-          configuration-path: ${{ inputs.configuration_path }}
+          configuration-path: '.github/auto_assign.yml'
 

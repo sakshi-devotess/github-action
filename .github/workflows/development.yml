@@ -53,6 +53,19 @@ on:
         required: false 
 
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print service type
+        run: |
+          echo "Service type: ${{ inputs.service_type }}"
+          if [ "${{ inputs.service_type }}" == "frontend" ]; then
+            echo "This is a frontend deployment."
+          elif [ "${{ inputs.service_type }}" == "backend" ]; then
+            echo "This is a backend deployment."
+          else
+            echo "Service type does not match frontend or backend."
+          fi
   deploy-front:
     if: ${{ inputs.service_type == 'frontend' }}
     uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'

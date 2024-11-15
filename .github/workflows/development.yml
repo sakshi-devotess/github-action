@@ -52,70 +52,33 @@ on:
       dotenv_me:
         required: false 
 
-# jobs:
-#   deploy-front:
-#     if: ${{ inputs.service_type == 'frontend' }}
-#     uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'
-#     with:
-#       hostname: ${{ inputs.hostname }}
-#       user: ${{ inputs.user }}
-#       target: ${{ inputs.target }}
-#       destination: ${{ inputs.destination }}
-#       fingerprint: ${{ inputs.fingerprint }}
-#       pm2_name: ${{ inputs.pm2_name }}
-#     secrets:
-#       password: ${{ secrets.password }}
-#       dotenv_key: ${{ secrets.dotenv_key }}
-
-#   deploy-back:
-#     if: ${{ inputs.service_type == 'backend' }}
-#     uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
-#     with:
-#       hostname: ${{ inputs.hostname }}
-#       user: ${{ inputs.user }}
-#       target: ${{ inputs.target }}
-#       destination: ${{ inputs.destination }}
-#       fingerprint: ${{ inputs.fingerprint }}
-#       pm2_name: ${{ inputs.pm2_name }}
-#       mode: ${{ inputs.mode }}
-#     secrets:
-#       password: ${{ secrets.password }}
-#       dotenv_key: ${{ secrets.dotenv_key }}
-#       dotenv_me: ${{ secrets.dotenv_me }}
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    if: ${{ matrix.service_type == inputs.service_type }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      
-      - name: Deploy Frontend
-        if: ${{ inputs.service_type == 'frontend' }}
-        uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'
-        with:
-          hostname: ${{ inputs.hostname }}
-          user: ${{ inputs.user }}
-          target: ${{ inputs.target }}
-          destination: ${{ inputs.destination }}
-          fingerprint: ${{ inputs.fingerprint }}
-          pm2_name: ${{ inputs.pm2_name }}
-        secrets:
-          password: ${{ secrets.password }}
-          dotenv_key: ${{ secrets.dotenv_key }}
+  deploy-front:
+    if: ${{ inputs.service_type == 'frontend' }}
+    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'
+    with:
+      hostname: ${{ inputs.hostname }}
+      user: ${{ inputs.user }}
+      target: ${{ inputs.target }}
+      destination: ${{ inputs.destination }}
+      fingerprint: ${{ inputs.fingerprint }}
+      pm2_name: ${{ inputs.pm2_name }}
+    secrets:
+      password: ${{ secrets.password }}
+      dotenv_key: ${{ secrets.dotenv_key }}
 
-      - name: Deploy Backend
-        if: ${{ inputs.service_type == 'backend' }}
-        uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
-        with:
-          hostname: ${{ inputs.hostname }}
-          user: ${{ inputs.user }}
-          target: ${{ inputs.target }}
-          destination: ${{ inputs.destination }}
-          fingerprint: ${{ inputs.fingerprint }}
-          pm2_name: ${{ inputs.pm2_name }}
-          mode: ${{ inputs.mode }}
-        secrets:
-          password: ${{ secrets.password }}
-          dotenv_key: ${{ secrets.dotenv_key }}
-          dotenv_me: ${{ secrets.dotenv_me }}
+  deploy-back:
+    if: ${{ inputs.service_type == 'backend' }}
+    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
+    with:
+      hostname: ${{ inputs.hostname }}
+      user: ${{ inputs.user }}
+      target: ${{ inputs.target }}
+      destination: ${{ inputs.destination }}
+      fingerprint: ${{ inputs.fingerprint }}
+      pm2_name: ${{ inputs.pm2_name }}
+      mode: ${{ inputs.mode }}
+    secrets:
+      password: ${{ secrets.password }}
+      dotenv_key: ${{ secrets.dotenv_key }}
+      dotenv_me: ${{ secrets.dotenv_me }}

@@ -1,19 +1,7 @@
 name: 'Auto Assign'
 on:
-  workflow_call:
-    inputs:
-      reviewers:
-        required: false
-        type: string
-        description: "Comma-separated list of reviewers"
-      numberOfReviewers:
-        required: false
-        type: number
-        description: "Number of reviewers to add"
-      skipKeywords:
-        required: false
-        type: string
-        description: "Keywords to skip"
+  pull_request_target:
+    types: [opened, ready_for_review, reopened, edited, synchronize]
 
 jobs:
   add-reviews:
@@ -21,5 +9,5 @@ jobs:
     steps:
       - uses: kentaro-m/auto-assign-action@v1.2.5
         with:
-          configuration-path: '../../auto_assign.yml'
+          configuration-path: '.github/auto_assign.yml'
 

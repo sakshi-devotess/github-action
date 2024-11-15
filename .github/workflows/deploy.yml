@@ -1,0 +1,79 @@
+name: Glesys deployment
+
+on:
+    workflow_call:
+        inputs:
+            target:
+                type: string
+                required: true
+            hostname:
+                type: string
+                required: true
+            user:
+                type: string
+                required: false
+                default: 'jaradat'
+            fingerprint:
+                type: string
+                required: true
+            destination:
+                type: string
+                required: true
+        secrets:
+            dotenv_key:
+                required: true
+            password:
+                required: true
+
+jobs:
+    build:
+        runs-on: ubuntu-22.04
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Setup Node.js 20
+              id: install-node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20.6.1
+                  cache: 'npm'
+
+            - name: npm install base
+              run: npm install
+
+            - name: npm run build
+              run: npm run build
+              env:
+                DOTENV_KEY: ${{ secrets.DOTENV_KEY }}
+                  
+            - name: Compress Repository
+              run: zip -r repo.zip ./build
+
+            - name: Activate ssh-agent
+              run: |
+                  eval "$( ssh-agent )"
+                  printenv|egrep -e SSH_AUTH_SOCK -e SSH_AGENT_PID >> $GITHUB_ENV
+                  mkdir ~/.ssh
+                  echo "${{ inputs.FINGERPRINT }}" >> ~/.ssh/known_hosts
+
+            - name: Prepare target for deploy
+              run: |
+                    sshpass -p ${{ secrets.PASSWORD }} ssh -v -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} " \
+                    rm -rf ${{ inputs.DESTINATION }}/release.old; \
+                    rm -rf ${{ inputs.DESTINATION }}/release.new; \
+                    mkdir -p ${{ inputs.DESTINATION }}/release; \
+                    mkdir ${{ inputs.DESTINATION }}/release.new"
+
+            - name: Copy build files to the Glesys server using scp and sshpass
+              run: sshpass -p ${{ secrets.PASSWORD }} scp -o StrictHostKeyChecking=no -r ./repo.zip ${{ inputs.USER }}@${{ inputs.HOSTNAME }}:${{ inputs.DESTINATION }}/release.new
+
+            - name: Glesys server, unzip the compressed file
+              run: sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} "cd ${{ inputs.DESTINATION }}/release.new && unzip -o repo.zip && rm repo.zip"
+
+            - name: Create symlinks and switch folders
+              run: |
+               sshpass -p ${{ secrets.PASSWORD }} ssh -o StrictHostKeyChecking=no ${{ inputs.USER }}@${{ inputs.HOSTNAME }} " \
+                    mv ${{ inputs.DESTINATION }}/release ${{ inputs.DESTINATION }}/release.old && \
+                    mv ${{ inputs.DESTINATION }}/release.new ${{ inputs.DESTINATION }}/release && \
+                    cd ${{ inputs.DESTINATION }}/release && pm2 restart SellamigoFE"

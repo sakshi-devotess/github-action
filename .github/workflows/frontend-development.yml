@@ -44,5 +44,5 @@ jobs:
       fingerprint: ${{ inputs.fingerprint }}
       pm2_name: ${{ inputs.pm2_name }}
     secrets:
-      password: ${{ env.password }}
-      dotenv_key: ${{ env.dotenv_key }} 
+      password: ${{ secrets.password }}
+      dotenv_key: ${{ secrets.dotenv_key }} 

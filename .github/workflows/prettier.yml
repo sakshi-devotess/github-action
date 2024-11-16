@@ -2,9 +2,7 @@ name: 'Prettier dry run'
 
 # This makes the workflow reusable
 on:
-  # workflow_call:  # Add this line
-  pull_request:
-    types: [opened, ready_for_review, reopened, edited, synchronize]
+  workflow_call:  # Add this line
 
 jobs:
   prettier:

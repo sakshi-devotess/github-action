@@ -1,0 +1,40 @@
+name: 'Test Build App Workflow'
+
+on:
+  workflow_call:
+    inputs:
+      graphql_url:
+        required: true
+        type: string
+        description: 'The GraphQL endpoint URL'
+      public_url:
+        required: true
+        type: string
+        description: 'The public URL for the React app'
+
+jobs:
+  test-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create .env file
+        run: |
+          echo "REACT_APP_GRAPHQL_URL=${{ inputs.graphql_url }}" > .env
+          echo "REACT_APP_PUBLIC_URL=${{ inputs.public_url }}" >> .env
+
+      - name: Setup Node.js 20
+        id: install-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.6.1
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: npm run build
+
+      - name: Run Tests
+        run: npm run test

@@ -27,7 +27,7 @@ on:
         required: true
         type: string
         description: "Name for the pm2 process"
-    env:
+    secrets:
       password:
         required: true
       dotenv_key:

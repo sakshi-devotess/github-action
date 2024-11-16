@@ -27,7 +27,7 @@ on:
         required: true
         type: string
         description: "Name for the pm2 process"
-    secrets:
+    env:
       password:
         required: true
       dotenv_key:
@@ -44,5 +44,5 @@ jobs:
       fingerprint: ${{ inputs.fingerprint }}
       pm2_name: ${{ inputs.pm2_name }}
     secrets:
-      password: ${{ secrets.password }}
-      dotenv_key: ${{ secrets.dotenv_key }} 
+      password: ${{ env.password }}
+      dotenv_key: ${{ env.dotenv_key }} 

@@ -20,55 +20,27 @@ on:
         type: string
         description: "Destination path on the server"
       fingerprint:
-        required: false
+        required: true
         type: string
         description: "SSH fingerprint"
-      password:
-        required: false
-        type: string
-        description: "Password for the server"
-      dotenv_key:
-        required: false
-        type: string
-        description: "Key for the .env file"
       pm2_name:
         required: true
         type: string
         description: "Name for the pm2 process"
-      service_type:
+      mode:
         required: true
         type: string
-        default: "frontend"
-        description: "Type of service to deploy (front or back)"
-      mode:
-        required: false
-        type: string
-        description: "Mode for the backend service"
+        description: "The mode for the deployment"
     secrets:
       password:
         required: true
       dotenv_key:
         required: true
       dotenv_me:
-        required: false 
+          required: true
 
 jobs:
-  deploy-front:
-    if: ${{ inputs.service_type == 'frontend' }}
-    uses: 'sakshi-devotess/github-action/.github/workflows/deploy-frontend.yml@main'
-    with:
-      hostname: ${{ inputs.hostname }}
-      user: ${{ inputs.user }}
-      target: ${{ inputs.target }}
-      destination: ${{ inputs.destination }}
-      fingerprint: ${{ inputs.fingerprint }}
-      pm2_name: ${{ inputs.pm2_name }}
-    secrets:
-      password: ${{ secrets.password }}
-      dotenv_key: ${{ secrets.dotenv_key }}
-
-  deploy-back:
-    if: ${{ inputs.service_type == 'backend' }}
+  deploy:
     uses: 'sakshi-devotess/github-action/.github/workflows/deploy-backend.yml@main'
     with:
       hostname: ${{ inputs.hostname }}
@@ -80,5 +52,5 @@ jobs:
       mode: ${{ inputs.mode }}
     secrets:
       password: ${{ secrets.password }}
-      dotenv_key: ${{ secrets.dotenv_key }}
+      dotenv_key: ${{ secrets.dotenv_key }} 
       dotenv_me: ${{ secrets.dotenv_me }}

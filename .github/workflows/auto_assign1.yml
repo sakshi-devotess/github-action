@@ -1,0 +1,34 @@
+name: 'Auto Assign'
+on:
+  workflow_call:
+    inputs:
+      reviewers:
+        required: true
+        type: string
+        description: "Comma-separated list of reviewers"
+
+jobs:
+  assign-reviewers:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Assign Reviewers
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const reviewers = "${{ inputs.reviewers }}".split(',').map(r => r.trim()); // Parse input
+          console.log("Reviewers to assign:", reviewers);
+          await github.rest.pulls.requestReviewers({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.payload.pull_request.number,
+            reviewers: reviewers,
+          });
+  # add-reviewers:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Add Reviewers
+  #       uses: buzato/add-reviewer-gh-action@1.0.5
+  #       with:
+  #         reviewers: ${{ inputs.reviewers }}
+  #         token: ${{ secrets.token }}
+

@@ -1,0 +1,18 @@
+name: 'Add Label Auto-Update'
+
+on:
+  workflow_call:
+    inputs:
+      label:
+        description: 'Label to add to the pull request'
+        required: true
+        type: string
+
+jobs:
+  add-label-auto-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add label to pull request
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: ${{ inputs.label }}

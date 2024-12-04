@@ -1,0 +1,89 @@
+name: Auto Update Head Branch
+
+on:
+  workflow_call:
+    inputs:
+      base_branch:
+        description: 'The base branch to check updates against'
+        required: true
+        type: string
+      label_name:
+        description: 'The label to filter PRs by'
+        required: false
+        type: string
+        default: 'auto-update'
+    secrets:
+      pat_token:
+          required: true
+
+jobs:
+    auto-update:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check Out Code
+              uses: actions/checkout@v3
+              with:
+                  token: ${{ secrets.pat_token }}
+              env:
+                  PAT: ${{ secrets.pat_token }}
+
+            - name: Get Oldest Pull Request
+              id: get-oldest-pr
+              run: |
+                  GITHUB_TOKEN=${{ secrets.pat_token }}
+                  GITHUB_REPOSITORY=${{ github.repository }}
+
+                  echo "Use the GitHub API to fetch the oldest open pull request targeting ${{ inputs.base_branch }} branch"
+                  oldest_pr_data=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                    "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls?state=open&base=${{ inputs.base_branch }}&sort=created&direction=asc")
+
+                    echo "Parse the JSON data to get the head branch name of the oldest pull request"
+                    oldest_pr_head_branch=$(echo "$oldest_pr_data" | jq -r '.[] | select(.labels[].name == "${{ inputs.label_name }}" and .state == "open" and .auto_merge) | .head.ref' | head -n 1)
+
+                  # Debugging output
+                  echo "oldest_pr_head_branch: $oldest_pr_head_branch"
+
+                  # Check if the oldest pull request number is set
+                  if [ -n "$oldest_pr_head_branch" ]; then
+                    echo "set the SKIP_UPDATE output variable"
+                    echo "SKIP_UPDATE=false" >> $GITHUB_OUTPUT # Set the SKIP_UPDATE output variable
+                    echo "set the HEAD_BRANCH_NAME environment variable"
+                    echo "HEAD_BRANCH_NAME=$oldest_pr_head_branch" >> $GITHUB_ENV # Set the HEAD_BRANCH environment variable
+                  else
+                    echo "No open pull requests founds with '${{ inputs.label_name }}' label and 'auto_merge' status."
+                  fi
+
+            - name: Ensure Current Branch is Up-to-Date and Conflict-Free
+              env:
+                  BASE_BRANCH: ${{ inputs.base_branch }}
+              if: success() && steps.get-oldest-pr.outputs.SKIP_UPDATE == 'false'
+              run: |
+                  HEAD_BRANCH=$HEAD_BRANCH_NAME # Use the HEAD_BRANCH_NAME environment variable
+
+                  # Debugging output
+                  echo "BASE_BRANCH: $BASE_BRANCH"
+                  echo "HEAD_BRANCH: $HEAD_BRANCH"
+
+                  echo "Set git user"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                  git config --global user.name "Auto Update Bot"
+
+                  echo "Fetch the latest changes from the remote"
+                  git fetch origin
+                  echo "Checkout base branch"
+                  git checkout "$BASE_BRANCH"
+                  echo "Checkout head branch"
+                  git checkout "$HEAD_BRANCH"
+
+                  echo "Check merge-base.."
+                  if git merge-base --is-ancestor "$BASE_BRANCH" "$HEAD_BRANCH"; then
+                    echo "Branch $HEAD_BRANCH is out of date or has conflicts. Manual intervention required."
+                  else
+                    # The branch is up-to-date and there are no conflicts
+                    echo "Branch $HEAD_BRANCH is up-to-date. Proceeding with the auto-update..."
+                    git pull --no-edit --no-rebase origin "$BASE_BRANCH" --allow-unrelated-histories
+                    echo "Pushing changes to $HEAD_BRANCH"
+                    git push origin "$HEAD_BRANCH"            
+                  fi
+                  echo "Completed..."
+                  exit 0

@@ -10,6 +10,7 @@ on:
 jobs:
   assign-reviewers:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
     - name: Assign Reviewers
       uses: actions/github-script@v6

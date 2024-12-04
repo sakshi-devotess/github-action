@@ -12,6 +12,10 @@ on:
         required: false
         type: string
         default: 'auto-update'
+      repository:
+        description: 'The repository to check for PRs'
+        required: true
+        type: string
     secrets:
       pat_token:
           required: true
@@ -31,7 +35,7 @@ jobs:
               id: get-oldest-pr
               run: |
                   GITHUB_TOKEN=${{ secrets.pat_token }}
-                  GITHUB_REPOSITORY=${{ github.repository }}
+                  GITHUB_REPOSITORY=${{ inputs.repository }}
 
                   echo "Use the GitHub API to fetch the oldest open pull request targeting ${{ inputs.base_branch }} branch"
                   oldest_pr_data=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \

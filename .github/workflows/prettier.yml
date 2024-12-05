@@ -3,6 +3,12 @@ name: 'Prettier dry run'
 # This makes the workflow reusable
 on:
   workflow_call:  # Add this line
+    inputs:
+      prettier_options:
+        description: 'Options to pass to Prettier'
+        required: false
+        default: '--check **/*.tsx'
+        type: string
 
 jobs:
   prettier:
@@ -19,4 +25,4 @@ jobs:
         with:
           dry: True
           only_changed: true
-          prettier_options: --check **/*.tsx
+          prettier_options: ${{ inputs.prettier_options }}

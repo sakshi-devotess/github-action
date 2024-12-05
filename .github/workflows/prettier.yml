@@ -37,7 +37,7 @@ jobs:
       - name: Check Branch Protection
         uses: 'sakshi-devotess/github-action@main'
         with:
-          repository: ${{ inputs.repository }}
+          repository: ${{ github.repository }}
           job_name: 'prettier'
           token: ${{ secrets.token }}
           target_branch: ${{ github.event.pull_request.base.ref }}

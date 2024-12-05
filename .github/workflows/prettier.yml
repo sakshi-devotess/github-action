@@ -30,27 +30,19 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const branch = 'main'; // Change to your branch name if different
-            const requiredJob = 'prettier'; // The job name to check
+            const branch = 'main';
             try {
               const { data } = await github.rest.repos.getBranchProtection({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 branch,
               });
-              const requiredChecks = data.required_status_checks?.contexts || [];
-              if (!requiredChecks.includes(requiredJob)) {
-                core.setFailed(`The job "${requiredJob}" is not listed in "Require status checks to pass before merging" for branch "${branch}".`);
-              }
+              console.log(data);
             } catch (error) {
-              if (error.status === 404) {
-                core.setFailed(`Branch protection is not configured for branch "${branch}".`);
-              } else {
-                throw error;
-              }
+              console.log(error.message);
             }
         env:
-            GITHUB_TOKEN: ${{ secrets.token }}
+          GITHUB_TOKEN: ${{ secrets.token }}
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

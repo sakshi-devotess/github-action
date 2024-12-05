@@ -32,10 +32,9 @@ jobs:
       - name: Check branch protection using GitHub Script
         id: check-branch-protection
         run: |
-          gh api repos/${{ inputs.repository }}/branches/main/protection \
-            --method GET \
-            --header "Authorization: token ${{ secrets.token }}" \
-            --jq '.'
+          curl --location 'https://api.github.com/repos/${{ inputs.repository }}/branches/main/protection' \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${{ secrets.token }}"
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

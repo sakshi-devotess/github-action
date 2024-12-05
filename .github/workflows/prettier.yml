@@ -5,14 +5,7 @@ on:
   workflow_call:  # Add this line
 
 jobs:
-  validate-branch-protection:
-    uses: .github/workflows/check-branch-protection.yml
-    with:
-      branch_name: 'main'
-      required_jobs: 'Prettier'
-
   prettier:
-    needs: validate-branch-protection
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

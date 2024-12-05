@@ -17,7 +17,7 @@ on:
         required: true
         type: string
     secrets:
-      github_token:
+      token:
           required: true
 
 jobs:
@@ -27,14 +27,14 @@ jobs:
             - name: Check Out Code
               uses: actions/checkout@v3
               with:
-                  token: ${{ secrets.github_token }}
+                  token: ${{ secrets.token }}
               env:
-                  PAT: ${{ secrets.github_token }}
+                  PAT: ${{ secrets.token }}
 
             - name: Get Oldest Pull Request
               id: get-oldest-pr
               run: |
-                  GITHUB_TOKEN=${{ secrets.github_token }}
+                  GITHUB_TOKEN=${{ secrets.token }}
                   GITHUB_REPOSITORY=${{ inputs.repository }}
 
                   echo "Use the GitHub API to fetch the oldest open pull request targeting ${{ inputs.base_branch }} branch"

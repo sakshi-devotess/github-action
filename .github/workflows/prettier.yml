@@ -11,7 +11,14 @@ on:
         type: string
 
 jobs:
+  validate-branch-protection:
+    uses: .github/workflows/check-branch-protection.yml
+    with:
+      branch_name: 'main'
+      required_jobs: 'Prettier,Purge CSS'
+
   prettier:
+    needs: validate-branch-protection
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

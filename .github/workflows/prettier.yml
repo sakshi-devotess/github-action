@@ -28,7 +28,7 @@ jobs:
             const branch = 'main'; // Change to your branch name if different
             const requiredJob = 'prettier'; // The job name to check
             try {
-              const { data } = await github.repos.getBranchProtection({
+              const { data } = await github.rest.repos.getBranchProtection({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 branch,

@@ -17,7 +17,7 @@ on:
         required: true
         type: string
     secrets:
-      pat_token:
+      github_token:
           required: true
 
 jobs:
@@ -27,22 +27,52 @@ jobs:
             - name: Check Out Code
               uses: actions/checkout@v3
               with:
-                  token: ${{ secrets.pat_token }}
+                  token: ${{ secrets.github_token }}
               env:
-                  PAT: ${{ secrets.pat_token }}
+                  PAT: ${{ secrets.github_token }}
 
             - name: Get Oldest Pull Request
               id: get-oldest-pr
               run: |
-                  GITHUB_TOKEN=${{ secrets.pat_token }}
+                  GITHUB_TOKEN=${{ secrets.github_token }}
                   GITHUB_REPOSITORY=${{ inputs.repository }}
 
                   echo "Use the GitHub API to fetch the oldest open pull request targeting ${{ inputs.base_branch }} branch"
                   oldest_pr_data=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
                     "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls?state=open&base=${{ inputs.base_branch }}&sort=created&direction=asc")
 
-                    echo "Parse the JSON data to get the head branch name of the oldest pull request"
-                    oldest_pr_head_branch=$(echo "$oldest_pr_data" | jq -r '.[] | select(.labels[].name == "${{ inputs.label_name }}" and .state == "open" and .auto_merge) | .head.ref' | head -n 1)
+                  echo "Iterating through pull requests to find the one with the 'auto-update' label"
+                  oldest_pr_head_branch=""
+
+                  for pr_number in $(echo "$oldest_pr_data" | jq -r '.[].number'); do
+                    echo "Fetching labels for pull request #$pr_number"
+                    labels=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                      "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$pr_number/labels" | jq -r '.[].name')
+
+                    echo "Labels for PR #$pr_number: $labels"
+
+                    # Check if 'auto-update' label exists
+                    if echo "$labels" | grep -q "auto-update"; then
+                      echo "Found 'auto-update' label on PR #$pr_number"
+
+                      # Get full PR data for additional checks
+                      pr_data=$(echo "$oldest_pr_data" | jq -r ".[] | select(.number == $pr_number)")
+                      
+                      # Check .state == "open" and .auto_merge
+                      pr_state=$(echo "$pr_data" | jq -r '.state')
+                      pr_auto_merge=$(echo "$pr_data" | jq -r '.auto_merge // empty')
+
+                      if [[ "$pr_state" == "open" && -n "$pr_auto_merge" ]]; then
+                        echo "PR #$pr_number satisfies all conditions (.state == 'open' and .auto_merge enabled)"
+                        oldest_pr_head_branch=$(echo "$pr_data" | jq -r '.head.ref')
+                        break
+                      else
+                        echo "PR #$pr_number does not satisfy all conditions."
+                      fi
+                    else
+                      echo "PR #$pr_number does not have the 'auto-update' label."
+                    fi
+                  done
 
                   # Debugging output
                   echo "oldest_pr_head_branch: $oldest_pr_head_branch"

@@ -10,6 +10,9 @@ inputs:
   token:
     description: 'GitHub token to authenticate'
     required: true
+  target_branch:
+    description: 'The target branch of the PR to check for branch protection'
+    required: true
 runs:
   using: 'composite'
   steps:
@@ -18,10 +21,12 @@ runs:
       run: |
         repository='${{ inputs.repository }}'
         job_name='${{ inputs.job_name }}'
+        target_branch='${{ inputs.target_branch }}'
 
+        echo "Checking branch protection for PR target branch: $target_branch"
         # Fetch branch protection details
         response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-          --location "https://api.github.com/repos/$repository/branches/main/protection" \
+          --location "https://api.github.com/repos/$repository/branches/$target_branch/protection" \
           --header 'Accept: application/vnd.github+json' \
           --header "Authorization: Bearer ${{ inputs.token }}")
         
@@ -30,7 +35,7 @@ runs:
 
         # Exit if branch protection is not enabled
         if [ "$status" -eq 404 ]; then
-          echo "Branch protection not enabled for 'main'."
+          echo "Branch protection not enabled for '$target_branch'."
           exit 1
         elif [ "$status" -ne 200 ]; then
           echo "Failed to fetch branch protection details: $body"
@@ -41,7 +46,7 @@ runs:
         required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
 
         if [ -z "$required_checks" ]; then
-          echo "No required status checks configured for 'main'."
+          echo "No required status checks configured for '$target_branch'."
           exit 1
         fi
         echo "Required status checks: $required_checks"

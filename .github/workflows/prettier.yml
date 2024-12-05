@@ -40,6 +40,7 @@ jobs:
           repository: ${{ inputs.repository }}
           job_name: 'prettier'
           token: ${{ secrets.token }}
+          target_branch: ${{ github.event.pull_request.base.ref }}
 
       # - name: Check branch protection using GitHub Script
       #   id: check-branch-protection

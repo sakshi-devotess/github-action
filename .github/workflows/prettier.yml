@@ -38,7 +38,7 @@ jobs:
         uses: 'sakshi-devotess/github-action@main'
         with:
           repository: ${{ inputs.repository }}
-          job_name: 'Prettier'
+          job_name: 'prettier'
           token: ${{ secrets.token }}
 
       # - name: Check branch protection using GitHub Script

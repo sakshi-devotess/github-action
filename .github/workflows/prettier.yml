@@ -35,7 +35,7 @@ jobs:
           ref: ${{ github.head_ref }}
         
       - name: Check Branch Protection
-        uses: 'sakshi-devotess/github-action/action.yml@main'
+        uses: 'sakshi-devotess/github-action@main'
         with:
           repository: ${{ inputs.repository }}
           job_name: 'Prettier'

@@ -89,7 +89,7 @@ jobs:
 
       #     echo "All specified jobs are listed under required status checks."
       - name: Set Job Name Environment Variable
-        run: echo "JOB_NAME=${{ github.event.workflow_job.name }}" >> $GITHUB_ENV
+        run: echo "JOB_NAME=Prettier" >> $GITHUB_ENV
 
       - name: Check branch protection for required status checks
         id: check-protection

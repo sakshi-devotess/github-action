@@ -32,7 +32,7 @@ jobs:
           script: |
             const branch = 'main';
             try {
-              const { data } = await github.rest.repos.getBranchProtection({
+              const { data } = await github.rest.branches.getBranchProtection({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 branch,

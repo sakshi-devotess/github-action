@@ -16,7 +16,7 @@ on:
       jobs_to_check:
         description: 'Comma-separated list of required jobs'
         required: false
-        default: 'prettier,purgecss'
+        default: 'prettier'
         type: string
     secrets:
       token:

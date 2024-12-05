@@ -48,6 +48,8 @@ jobs:
               console.error('Failed to fetch branch protection:', error.message);
               core.setFailed(error.message);
             }
+        env:
+          GITHUB_TOKEN: ${{ secrets.token }}
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

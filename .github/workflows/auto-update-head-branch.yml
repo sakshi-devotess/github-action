@@ -41,7 +41,7 @@ jobs:
                   oldest_pr_data=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
                     "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls?state=open&base=${{ inputs.base_branch }}&sort=created&direction=asc")
 
-                  echo "Iterating through pull requests to find the one with the 'auto-update' label"
+                  echo "Iterating through pull requests to find the one with the ${{ inputs.label_name }} label"
                   oldest_pr_head_branch=""
 
                   for pr_number in $(echo "$oldest_pr_data" | jq -r '.[].number'); do
@@ -51,9 +51,9 @@ jobs:
 
                     echo "Labels for PR #$pr_number: $labels"
 
-                    # Check if 'auto-update' label exists
-                    if echo "$labels" | grep -q "auto-update"; then
-                      echo "Found 'auto-update' label on PR #$pr_number"
+                    # Check if ${{ inputs.label_name }} label exists
+                    if echo "$labels" | grep -q "${{ inputs.label_name }}"; then
+                      echo "Found ${{ inputs.label_name }} label on PR #$pr_number"
 
                       # Get full PR data for additional checks
                       pr_data=$(echo "$oldest_pr_data" | jq -r ".[] | select(.number == $pr_number)")
@@ -70,7 +70,7 @@ jobs:
                         echo "PR #$pr_number does not satisfy all conditions."
                       fi
                     else
-                      echo "PR #$pr_number does not have the 'auto-update' label."
+                      echo "PR #$pr_number does not have the ${{ inputs.label_name }} label."
                     fi
                   done
 

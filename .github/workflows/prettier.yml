@@ -9,6 +9,10 @@ on:
         required: false
         default: '--check **/*.tsx'
         type: string
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   prettier:
@@ -44,6 +48,8 @@ jobs:
                 throw error;
               }
             }
+        env:
+            GITHUB_TOKEN: ${{ secrets.token }}
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

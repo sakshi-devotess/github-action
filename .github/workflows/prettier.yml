@@ -12,7 +12,7 @@ on:
 
 jobs:
   validate-branch-protection:
-    uses: .github/workflows/check-branch-protection.yml
+    uses: 'sakshi-devotess/github-action/.github/workflows/check-branch-protection.yml@main'
     with:
       branch_name: 'main'
       required_jobs: 'Prettier,Purge CSS'

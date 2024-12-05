@@ -15,7 +15,7 @@ on:
         type: string
       jobs_to_check:
         description: 'Comma-separated list of required jobs'
-        required: true
+        required: false
         default: 'prettier,purgecss'
         type: string
     secrets:
@@ -83,7 +83,7 @@ jobs:
 
           echo "All specified jobs are listed under required status checks."
 
-          
+
       - name: Prettify code
         uses: creyD/prettier_action@v4.3
         with:

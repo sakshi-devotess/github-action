@@ -25,21 +25,27 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
 
-      - name: Check branch protection and Prettier status check
+      - name: Check branch protection using GitHub Script
         id: check-branch-protection
         uses: actions/github-script@v6
         with:
           script: |
-            const branch = 'main';
+            const branch = 'main'; // Specify your branch here
             try {
-              const { data } = await github.rest.branches.getBranchProtection({
+              console.log(`Fetching branch protection rules for branch: ${branch}`);
+              const response = await github.rest.repos.getBranchProtection({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 branch,
               });
-              console.log(data);
+              console.log('Branch Protection Rules:', JSON.stringify(response.data, null, 2));
             } catch (error) {
-              console.log(error.message);
+              console.error('Error fetching branch protection rules:', error.message);
+              if (error.response) {
+                console.error('Response status:', error.response.status);
+                console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+              }
+              core.setFailed(error.message);
             }
         env:
           GITHUB_TOKEN: ${{ secrets.token }}

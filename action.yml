@@ -22,7 +22,7 @@ runs:
         repository='${{ inputs.repository }}'
         job_name='${{ inputs.job_name }}'
         target_branch='${{ inputs.target_branch }}'
-
+        echo "repo : $repository"
         echo "Checking branch protection for PR target branch: $target_branch"
         # Fetch branch protection details
         response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \

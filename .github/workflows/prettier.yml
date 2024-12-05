@@ -11,14 +11,7 @@ on:
         type: string
 
 jobs:
-  validate-branch-protection:
-    uses: 'sakshi-devotess/github-action/.github/workflows/check-branch-protection.yml@main'
-    with:
-      branch_name: 'main'
-      required_jobs: 'Prettier,Purge CSS'
-
   prettier:
-    needs: validate-branch-protection
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,6 +19,31 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
+
+      - name: Check branch protection and Prettier status check
+        id: check-branch-protection
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branch = 'main'; // Change to your branch name if different
+            const requiredJob = 'prettier'; // The job name to check
+            try {
+              const { data } = await github.repos.getBranchProtection({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch,
+              });
+              const requiredChecks = data.required_status_checks?.contexts || [];
+              if (!requiredChecks.includes(requiredJob)) {
+                core.setFailed(`The job "${requiredJob}" is not listed in "Require status checks to pass before merging" for branch "${branch}".`);
+              }
+            } catch (error) {
+              if (error.status === 404) {
+                core.setFailed(`Branch protection is not configured for branch "${branch}".`);
+              } else {
+                throw error;
+              }
+            }
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

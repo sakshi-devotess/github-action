@@ -13,11 +13,11 @@ on:
         description: 'The repository to check for PRs'
         required: true
         type: string
-      jobs_to_check:
-        description: 'Comma-separated list of required jobs'
-        required: false
-        default: 'prettier'
-        type: string
+      # jobs_to_check:
+      #   description: 'Comma-separated list of required jobs'
+      #   required: false
+      #   default: 'prettier'
+      #   type: string
     secrets:
       token:
         description: 'Token to use for GitHub API'
@@ -33,6 +33,13 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
+        
+      - name: Check Branch Protection
+        uses: 'sakshi-devotess/github-action/.github/actions/check_branch_protection.yml@main'
+        with:
+          repository: ${{ inputs.repository }}
+          job_name: 'Prettier'
+          token: ${{ secrets.token }}
 
       # - name: Check branch protection using GitHub Script
       #   id: check-branch-protection
@@ -88,53 +95,53 @@ jobs:
       #     done
 
       #     echo "All specified jobs are listed under required status checks."
-      - name: Set Job Name Environment Variable
-        run: echo "JOB_NAME=prettier" >> $GITHUB_ENV
+      # - name: Set Job Name Environment Variable
+      #   run: echo "JOB_NAME=prettier" >> $GITHUB_ENV
 
-      - name: Check branch protection for required status checks
-        id: check-protection
-        run: |
-          repository='${{ inputs.repository }}'
-          job_name="${JOB_NAME}"
+      # - name: Check branch protection for required status checks
+      #   id: check-protection
+      #   run: |
+      #     repository='${{ inputs.repository }}'
+      #     job_name="${JOB_NAME}"
           
-          # Extract owner and repo from the repository input
-          owner=$(echo "$repository" | cut -d'/' -f1)
-          repo=$(echo "$repository" | cut -d'/' -f2)
+      #     # Extract owner and repo from the repository input
+      #     owner=$(echo "$repository" | cut -d'/' -f1)
+      #     repo=$(echo "$repository" | cut -d'/' -f2)
 
-          # Fetch branch protection details
-          response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-            --location "https://api.github.com/repos/$repository/branches/main/protection" \
-            --header 'Accept: application/vnd.github+json' \
-            --header "Authorization: Bearer ${{ secrets.token }}")
+      #     # Fetch branch protection details
+      #     response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+      #       --location "https://api.github.com/repos/$repository/branches/main/protection" \
+      #       --header 'Accept: application/vnd.github+json' \
+      #       --header "Authorization: Bearer ${{ secrets.token }}")
           
-          body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
-          status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+      #     body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+      #     status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-          # Exit if branch protection is not enabled
-          if [ "$status" -eq 404 ]; then
-            echo "Branch protection not enabled for 'main'."
-            exit 1
-          elif [ "$status" -ne 200 ]; then
-            echo "Failed to fetch branch protection details: $body"
-            exit 1
-          fi
+      #     # Exit if branch protection is not enabled
+      #     if [ "$status" -eq 404 ]; then
+      #       echo "Branch protection not enabled for 'main'."
+      #       exit 1
+      #     elif [ "$status" -ne 200 ]; then
+      #       echo "Failed to fetch branch protection details: $body"
+      #       exit 1
+      #     fi
 
-          # Extract required status checks
-          required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
+      #     # Extract required status checks
+      #     required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
 
-          if [ -z "$required_checks" ]; then
-            echo "No required status checks configured for 'main'."
-            exit 1
-          fi
-          echo "Required status checks: $required_checks"
+      #     if [ -z "$required_checks" ]; then
+      #       echo "No required status checks configured for 'main'."
+      #       exit 1
+      #     fi
+      #     echo "Required status checks: $required_checks"
 
-          # Check if the current job is in required checks
-          if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
-            echo "Job '$job_name' is NOT listed under required status checks."
-            exit 1
-          fi
+      #     # Check if the current job is in required checks
+      #     if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
+      #       echo "Job '$job_name' is NOT listed under required status checks."
+      #       exit 1
+      #     fi
 
-          echo "Current job '$job_name' is listed under required status checks."
+      #     echo "Current job '$job_name' is listed under required status checks."
 
 
       - name: Prettify code

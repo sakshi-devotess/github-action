@@ -1,0 +1,55 @@
+name: 'Check Branch Protection'
+description: 'Verify that branch protection is set and includes the current job'
+inputs:
+  repository:
+    description: 'The repository to check for branch protection'
+    required: true
+  job_name:
+    description: 'The job name to check against branch protection'
+    required: true
+  token:
+    description: 'GitHub token to authenticate'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Check branch protection for required status checks
+      shell: bash
+      run: |
+        repository='${{ inputs.repository }}'
+        job_name='${{ inputs.job_name }}'
+
+        # Fetch branch protection details
+        response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          --location "https://api.github.com/repos/$repository/branches/main/protection" \
+          --header 'Accept: application/vnd.github+json' \
+          --header "Authorization: Bearer ${{ inputs.token }}")
+        
+        body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+        status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+        # Exit if branch protection is not enabled
+        if [ "$status" -eq 404 ]; then
+          echo "Branch protection not enabled for 'main'."
+          exit 1
+        elif [ "$status" -ne 200 ]; then
+          echo "Failed to fetch branch protection details: $body"
+          exit 1
+        fi
+
+        # Extract required status checks
+        required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
+
+        if [ -z "$required_checks" ]; then
+          echo "No required status checks configured for 'main'."
+          exit 1
+        fi
+        echo "Required status checks: $required_checks"
+
+        # Check if the current job is in required checks
+        if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
+          echo "Job '$job_name' is NOT listed under required status checks."
+          exit 1
+        fi
+
+        echo "Current job '$job_name' is listed under required status checks."

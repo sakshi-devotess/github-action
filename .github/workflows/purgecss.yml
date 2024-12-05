@@ -1,0 +1,38 @@
+name: 'PurgeCSS Action'
+
+# This makes the workflow reusable
+on:
+  workflow_call:  # Add this line
+    inputs:
+      repository:
+        description: 'The repository to check for PRs'
+        required: true
+        type: string
+    secrets:
+      token:
+        description: 'Token to use for GitHub API'
+        required: true
+
+jobs:
+  purge-css:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      
+      - name: Check Branch Protection
+        uses: 'sakshi-devotess/github-action@main'
+        with:
+          repository: ${{ inputs.repository }}
+          job_name: 'purge-css'
+          token: ${{ secrets.token }}
+          target_branch: ${{ github.event.pull_request.base.ref }}
+
+      - name: Install dependencies
+        run: npm install
+      - name: PurgeCSS
+        run: npm run purgeCss
+        continue-on-error: false

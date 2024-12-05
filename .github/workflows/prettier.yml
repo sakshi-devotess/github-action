@@ -31,25 +31,11 @@ jobs:
 
       - name: Check branch protection using GitHub Script
         id: check-branch-protection
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const repository = '${{ inputs.repository }}';
-            const [owner, repo] = repository.split('/');
-            
-            try {
-              const response = await github.request('GET /repos/{owner}/{repo}/branches/{branch}/protection', {
-                owner,
-                repo,
-                branch: 'main',
-              });
-              console.log('Branch protection details:', response.data);
-            } catch (error) {
-              console.error('Failed to fetch branch protection:', error.message);
-              core.setFailed(error.message);
-            }
-        env:
-          GITHUB_TOKEN: ${{ secrets.token }}
+        run: |
+          gh api repos/${{ inputs.repository }}/branches/main/protection \
+            --method GET \
+            --header "Authorization: token ${{ secrets.token }}" \
+            --jq '.'
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

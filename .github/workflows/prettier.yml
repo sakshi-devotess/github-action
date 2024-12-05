@@ -9,10 +9,6 @@ on:
         required: false
         default: '--check **/*.tsx'
         type: string
-      repository:
-        description: 'The repository to check for PRs'
-        required: true
-        type: string
       # jobs_to_check:
       #   description: 'Comma-separated list of required jobs'
       #   required: false

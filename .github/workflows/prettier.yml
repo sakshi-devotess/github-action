@@ -69,8 +69,13 @@ jobs:
             exit 1
           fi
 
-          # Parse required status checks
-          required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts[]' || echo "")
+          # Extract required status checks
+          required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
+
+          if [ -z "$required_checks" ]; then
+            echo "No required status checks configured for 'main'."
+            exit 1
+          fi
           echo "Required status checks: $required_checks"
 
           # Check if all jobs are in required checks

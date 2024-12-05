@@ -13,6 +13,11 @@ on:
         description: 'The repository to check for PRs'
         required: true
         type: string
+      jobs_to_check:
+        description: 'Comma-separated list of required jobs'
+        required: true
+        default: 'prettier,purgecss'
+        type: string
     secrets:
       token:
         description: 'Token to use for GitHub API'
@@ -29,13 +34,56 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
 
-      - name: Check branch protection using GitHub Script
-        id: check-branch-protection
+      # - name: Check branch protection using GitHub Script
+      #   id: check-branch-protection
+      #   run: |
+      #     curl --location 'https://api.github.com/repos/${{ inputs.repository }}/branches/main/protection' \
+      #       --header 'Accept: application/vnd.github+json' \
+      #       --header "Authorization: Bearer ${{ secrets.token }}"
+      - name: Check branch protection for required status checks
+        id: check-protection
         run: |
-          curl --location 'https://api.github.com/repos/${{ inputs.repository }}/branches/main/protection' \
-            --header 'Accept: application/vnd.github+json' \
-            --header "Authorization: Bearer ${{ secrets.token }}"
+          repository='${{ inputs.repository }}'
+          jobs_to_check='${{ inputs.jobs_to_check }}'
+          IFS=',' read -r -a jobs <<< "$jobs_to_check"
+          
+          # Extract owner and repo from the repository input
+          owner=$(echo "$repository" | cut -d'/' -f1)
+          repo=$(echo "$repository" | cut -d'/' -f2)
 
+          # Fetch branch protection details
+          response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+            --location "https://api.github.com/repos/$repository/branches/main/protection" \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${{ secrets.token }}")
+          
+          body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+          status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+          # Exit if branch protection is not enabled
+          if [ "$status" -eq 404 ]; then
+            echo "Branch protection not enabled for 'main'."
+            exit 1
+          elif [ "$status" -ne 200 ]; then
+            echo "Failed to fetch branch protection details: $body"
+            exit 1
+          fi
+
+          # Parse required status checks
+          required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts[]' || echo "")
+          echo "Required status checks: $required_checks"
+
+          # Check if all jobs are in required checks
+          for job in "${jobs[@]}"; do
+            if [[ ! " ${required_checks[@]} " =~ " $job " ]]; then
+              echo "Job '$job' is NOT listed under required status checks."
+              exit 1
+            fi
+          done
+
+          echo "All specified jobs are listed under required status checks."
+
+          
       - name: Prettify code
         uses: creyD/prettier_action@v4.3
         with:

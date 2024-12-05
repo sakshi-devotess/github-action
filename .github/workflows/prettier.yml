@@ -9,6 +9,10 @@ on:
         required: false
         default: '--check **/*.tsx'
         type: string
+      repository:
+        description: 'The repository to check for PRs'
+        required: true
+        type: string
     secrets:
       token:
         description: 'Token to use for GitHub API'
@@ -27,28 +31,11 @@ jobs:
 
       - name: Check branch protection using GitHub Script
         id: check-branch-protection
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const branch = 'main'; // Specify your branch here
-            try {
-              console.log(`Fetching branch protection rules for branch: ${branch}`);
-              const response = await github.rest.repos.getBranchProtection({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                branch,
-              });
-              console.log('Branch Protection Rules:', JSON.stringify(response.data, null, 2));
-            } catch (error) {
-              console.error('Error fetching branch protection rules:', error.message);
-              if (error.response) {
-                console.error('Response status:', error.response.status);
-                console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-              }
-              core.setFailed(error.message);
-            }
-        env:
-          GITHUB_TOKEN: ${{ secrets.token }}
+        run: |
+          curl --location 'https://api.github.com/repos/${{ inputs.repository }}/branches/main/protection' \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${{ secrets.token }}" \
+            --header 'X-GitHub-Api-Version: 2022-11-28'
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

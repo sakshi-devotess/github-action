@@ -25,34 +25,46 @@ runs:
 
         # Loop through each branch and check protection
         for BRANCH in "${BRANCHES[@]}"; do
-          echo "Checking branch protection for '$BRANCH'..."
+          echo "--------------------------------------"
+          echo "Checking branch protection for: $BRANCH"
           
-          RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          # Fetch branch protection details
+          RESPONSE=$(curl --verbose --silent --write-out "HTTPSTATUS:%{http_code}" \
             --location "https://api.github.com/repos/${{ github.repository }}/branches/$BRANCH/protection" \
             --header 'Accept: application/vnd.github+json' \
             --header "Authorization: Bearer ${{ inputs.token }}")
 
+          # Log raw response
+          echo "Raw Response:"
+          echo "$RESPONSE"
+
+          # Extract HTTP status and body
           BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
           STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
+          # Log extracted components
+          echo "HTTP Status: $STATUS"
+          echo "Response Body: $BODY"
+
           if [ "$STATUS" -eq 404 ]; then
-            echo "Branch '$BRANCH' does not exist or is not protected."
+            echo "ERROR: Branch '$BRANCH' does not exist or branch protection is not enabled."
             ALL_PROTECTED=false
           elif [ "$STATUS" -ne 200 ]; then
-            echo "Failed to fetch branch protection details for '$BRANCH': $BODY"
+            echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
             ALL_PROTECTED=false
           else
-            echo "Branch protection is enabled for '$BRANCH'."
+            echo "SUCCESS: Branch protection is enabled for '$BRANCH'."
           fi
+          echo "--------------------------------------"
         done
 
         # Check the final result
         if [ "$ALL_PROTECTED" = false ]; then
-          echo "One or more branches are either missing or do not have protection enabled."
+          echo "ERROR: One or more branches are either missing or do not have branch protection enabled."
           exit 1
         fi
 
-        echo "Branch protection is enabled for all specified branches. Success!"
+        echo "SUCCESS: Branch protection is enabled for all specified branches."
     # - name: Check branch protection for required status checks
     #   shell: bash
     #   run: |

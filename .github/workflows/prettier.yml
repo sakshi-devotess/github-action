@@ -21,7 +21,8 @@ on:
 
 jobs:
   prettier:
-    permissions: write-all
+    # permissions: write-all
+    permissions: read-all
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

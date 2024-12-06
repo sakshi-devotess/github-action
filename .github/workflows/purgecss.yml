@@ -24,7 +24,7 @@ jobs:
           repository: ${{ inputs.repository }}
           job_name: 'purge-css'
           token: ${{ secrets.token }}
-          branches: 'main,development'
+          branches: main,development'
 
       - name: Install dependencies
         run: npm install

@@ -14,10 +14,10 @@ on:
       #   required: false
       #   default: 'prettier'
       #   type: string
-    secrets:
-      token:
-        description: 'Token to use for GitHub API'
-        required: true
+    # secrets:
+    #   token:
+    #     description: 'Token to use for GitHub API'
+    #     required: false
 
 jobs:
   prettier:
@@ -36,7 +36,7 @@ jobs:
         with:
           repository: ${{ github.repository }}
           job_name: 'prettier'
-          token: ${{ secrets.token }}
+          token: ${{ secrets.PAT_TOKEN }}
           target_branch: ${{ github.event.pull_request.base.ref }}
 
       # - name: Check branch protection using GitHub Script

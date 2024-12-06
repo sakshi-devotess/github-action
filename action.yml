@@ -25,37 +25,25 @@ runs:
 
         # Loop through each branch and check protection
         for BRANCH in "${BRANCHES[@]}"; do
-          echo "--------------------------------------"
-          echo "Checking branch protection for: $BRANCH"
-          
-          # Fetch branch protection details
-          RESPONSE=$(curl --verbose --silent --write-out "HTTPSTATUS:%{http_code}" \
-            --location "https://api.github.com/repos/${{ github.repository }}/branches/$BRANCH/protection" \
-            --header 'Accept: application/vnd.github+json' \
-            --header "Authorization: Bearer ${{ inputs.token }}")
+           echo "Checking branch protection for branch: $branch"
 
-          # Log raw response
-          echo "Raw Response:"
-          echo "$RESPONSE"
+            # Fetch branch protection details
+            response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+              --location "https://api.github.com/repos/$repository/branches/$branch/protection" \
+              --header 'Accept: application/vnd.github+json' \
+              --header "Authorization: Bearer ${{ inputs.token }}")
+            
+            body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+            status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-          # Extract HTTP status and body
-          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
-          STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-
-          # Log extracted components
-          echo "HTTP Status: $STATUS"
-          echo "Response Body: $BODY"
-
-          if [ "$STATUS" -eq 404 ]; then
-            echo "ERROR: Branch '$BRANCH' does not exist or branch protection is not enabled."
-            ALL_PROTECTED=false
-          elif [ "$STATUS" -ne 200 ]; then
-            echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
-            ALL_PROTECTED=false
-          else
-            echo "SUCCESS: Branch protection is enabled for '$BRANCH'."
-          fi
-          echo "--------------------------------------"
+            # Exit if branch protection is not enabled
+            if [ "$status" -eq 404 ]; then
+              echo "Branch protection not enabled for branch '$branch'."
+              exit 1
+            elif [ "$status" -ne 200 ]; then
+              echo "Failed to fetch branch protection details for branch '$branch': $body"
+              exit 1
+            fi
         done
 
         # Check the final result

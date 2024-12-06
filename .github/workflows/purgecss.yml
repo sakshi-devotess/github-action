@@ -21,7 +21,7 @@ jobs:
       - name: Check Branch Protection
         uses: 'sakshi-devotess/github-action@main'
         with:
-          repository: ${{ inputs.repository }}
+          repository: ${{ github.repository }}
           job_name: 'purge-css'
           token: ${{ secrets.token }}
           branches: 'main,development'

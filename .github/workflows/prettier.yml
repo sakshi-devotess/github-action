@@ -21,7 +21,11 @@ on:
 
 jobs:
   prettier:
-    permissions: write-all
+    # permissions: write-all
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

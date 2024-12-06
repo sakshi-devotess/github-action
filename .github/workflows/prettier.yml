@@ -21,8 +21,6 @@ on:
 
 jobs:
   prettier:
-    # permissions: write-all
-    permissions: read-all
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,7 +35,7 @@ jobs:
           repository: ${{ github.repository }}
           job_name: 'prettier'
           token: ${{ secrets.token }}
-          target_branch: ${{ github.event.pull_request.base.ref }}
+          branches: 'main,development'
 
       # - name: Check branch protection using GitHub Script
       #   id: check-branch-protection

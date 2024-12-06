@@ -3,11 +3,6 @@ name: 'PurgeCSS Action'
 # This makes the workflow reusable
 on:
   workflow_call:  # Add this line
-    inputs:
-      repository:
-        description: 'The repository to check for PRs'
-        required: true
-        type: string
     secrets:
       token:
         description: 'Token to use for GitHub API'
@@ -29,7 +24,7 @@ jobs:
           repository: ${{ inputs.repository }}
           job_name: 'purge-css'
           token: ${{ secrets.token }}
-          target_branch: ${{ github.event.pull_request.base.ref }}
+          branches: 'main,development'
 
       - name: Install dependencies
         run: npm install

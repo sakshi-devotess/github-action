@@ -10,51 +10,88 @@ inputs:
   token:
     description: 'GitHub token to authenticate'
     required: true
-  target_branch:
-    description: 'The target branch of the PR to check for branch protection'
+  branches:
+    description: 'Comma-separated list of branches to check for branch protection'
     required: true
 runs:
   using: 'composite'
   steps:
-    - name: Check branch protection for required status checks
+    - name: Parse Branches and Check Protection
       shell: bash
       run: |
-        repository='${{ inputs.repository }}'
-        job_name='${{ inputs.job_name }}'
-        target_branch='${{ inputs.target_branch }}'
-        echo "repo : $repository"
-        echo "Checking branch protection for PR target branch: $target_branch"
-        # Fetch branch protection details
-        response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-          --location "https://api.github.com/repos/$repository/branches/$target_branch/protection" \
-          --header 'Accept: application/vnd.github+json' \
-          --header "Authorization: Bearer ${{ inputs.token }}")
+        # Get the input branches and split into an array
+        IFS=',' read -r -a BRANCHES <<< "${{ github.event.inputs.branches }}"
+        ALL_PROTECTED=true
+
+        # Loop through each branch and check protection
+        for BRANCH in "${BRANCHES[@]}"; do
+          echo "Checking branch protection for '$BRANCH'..."
+          
+          RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+            --location "https://api.github.com/repos/${{ github.repository }}/branches/$BRANCH/protection" \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}")
+
+          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+          if [ "$STATUS" -eq 404 ]; then
+            echo "Branch protection is NOT enabled for '$BRANCH'."
+            ALL_PROTECTED=false
+          elif [ "$STATUS" -ne 200 ]; then
+            echo "Failed to fetch branch protection details for '$BRANCH': $BODY"
+            ALL_PROTECTED=false
+          else
+            echo "Branch protection is enabled for '$BRANCH'."
+          fi
+        done
+
+        # Check the final result
+        if [ "$ALL_PROTECTED" = false ]; then
+          echo "One or more branches do not have protection enabled."
+          exit 1
+        fi
+
+        echo "Branch protection is enabled for all specified branches. Success!"
+    # - name: Check branch protection for required status checks
+    #   shell: bash
+    #   run: |
+    #     repository='${{ inputs.repository }}'
+    #     job_name='${{ inputs.job_name }}'
+    #     target_branch='${{ inputs.target_branch }}'
+    #     echo "repo : $repository"
+    #     echo "Checking branch protection for PR target branch: $target_branch"
+    #     # Fetch branch protection details
+    #     response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+    #       --location "https://api.github.com/repos/$repository/branches/$target_branch/protection" \
+    #       --header 'Accept: application/vnd.github+json' \
+    #       --header "Authorization: Bearer ${{ inputs.token }}")
         
-        body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
-        status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    #     body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+    #     status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-        # Exit if branch protection is not enabled
-        if [ "$status" -eq 404 ]; then
-          echo "Branch protection not enabled for '$target_branch'."
-          exit 1
-        elif [ "$status" -ne 200 ]; then
-          echo "Failed to fetch branch protection details: $body"
-          exit 1
-        fi
+    #     # Exit if branch protection is not enabled
+    #     if [ "$status" -eq 404 ]; then
+    #       echo "Branch protection not enabled for '$target_branch'."
+    #       exit 1
+    #     elif [ "$status" -ne 200 ]; then
+    #       echo "Failed to fetch branch protection details: $body"
+    #       exit 1
+    #     fi
 
-        # Extract required status checks
-        required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
+    #     # Extract required status checks
+    #     required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
 
-        if [ -z "$required_checks" ]; then
-          echo "No required status checks configured for '$target_branch'."
-          exit 1
-        fi
-        echo "Required status checks: $required_checks"
+    #     if [ -z "$required_checks" ]; then
+    #       echo "No required status checks configured for '$target_branch'."
+    #       exit 1
+    #     fi
+    #     echo "Required status checks: $required_checks"
 
-        # Check if the current job is in required checks
-        if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
-          echo "Job '$job_name' is NOT listed under required status checks."
-          exit 1
-        fi
+    #     # Check if the current job is in required checks
+    #     if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
+    #       echo "Job '$job_name' is NOT listed under required status checks."
+    #       exit 1
+    #     fi
 
-        echo "Current job '$job_name' is listed under required status checks."
+    #     echo "Current job '$job_name' is listed under required status checks."

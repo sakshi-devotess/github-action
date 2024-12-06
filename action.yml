@@ -36,7 +36,7 @@ runs:
           STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
           if [ "$STATUS" -eq 404 ]; then
-            echo "Branch protection is NOT enabled for '$BRANCH'."
+            echo "Branch '$BRANCH' does not exist or is not protected."
             ALL_PROTECTED=false
           elif [ "$STATUS" -ne 200 ]; then
             echo "Failed to fetch branch protection details for '$BRANCH': $BODY"
@@ -48,7 +48,7 @@ runs:
 
         # Check the final result
         if [ "$ALL_PROTECTED" = false ]; then
-          echo "One or more branches do not have protection enabled."
+          echo "One or more branches are either missing or do not have protection enabled."
           exit 1
         fi
 

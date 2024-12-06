@@ -20,51 +20,53 @@ runs:
       shell: bash
       run: |
         # Get the input branches and split into an array
-        IFS=',' read -r -a BRANCHES <<< "${{ github.event.inputs.branches }}"
+        IFS=',' read -r -a BRANCHES <<< "${{ inputs.branches }}"
         ALL_PROTECTED=true
 
-        # Loop through each branch and check protection
         for BRANCH in "${BRANCHES[@]}"; do
           echo "--------------------------------------"
           echo "Checking branch protection for: $BRANCH"
           
           # Fetch branch protection details
-          RESPONSE=$(curl --verbose --silent --write-out "HTTPSTATUS:%{http_code}" \
-            --location "https://api.github.com/repos/${{ github.repository }}/branches/$BRANCH/protection" \
+          RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+            --location "https://api.github.com/repos/${{ inputs.repository }}/branches/$BRANCH/protection" \
             --header 'Accept: application/vnd.github+json' \
             --header "Authorization: Bearer ${{ inputs.token }}")
-
-          # Log raw response
-          echo "Raw Response:"
-          echo "$RESPONSE"
-
+          
           # Extract HTTP status and body
           BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
           STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-          # Log extracted components
           echo "HTTP Status: $STATUS"
           echo "Response Body: $BODY"
 
+          # Check if the branch exists and has protection
           if [ "$STATUS" -eq 404 ]; then
-            echo "ERROR: Branch '$BRANCH' does not exist or branch protection is not enabled."
+            echo "ERROR: Branch '$BRANCH' does not exist or does not have branch protection enabled."
             ALL_PROTECTED=false
           elif [ "$STATUS" -ne 200 ]; then
             echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
             ALL_PROTECTED=false
           else
-            echo "SUCCESS: Branch protection is enabled for '$BRANCH'."
+            # Verify branch protection rules exist
+            PROTECTION_ENABLED=$(echo "$BODY" | jq '.required_status_checks | .contexts | length > 0')
+            if [ "$PROTECTION_ENABLED" = "false" ]; then
+              echo "ERROR: Branch '$BRANCH' exists but does not have branch protection rules set."
+              ALL_PROTECTED=false
+            else
+              echo "SUCCESS: Branch '$BRANCH' is protected."
+            fi
           fi
           echo "--------------------------------------"
         done
 
-        # Check the final result
+        # Final check
         if [ "$ALL_PROTECTED" = false ]; then
-          echo "ERROR: One or more branches are either missing or do not have branch protection enabled."
+          echo "ERROR: One or more branches do not exist or do not have branch protection enabled."
           exit 1
         fi
 
-        echo "SUCCESS: Branch protection is enabled for all specified branches."
+        echo "SUCCESS: All specified branches are protected."
     # - name: Check branch protection for required status checks
     #   shell: bash
     #   run: |

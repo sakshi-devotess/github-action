@@ -48,13 +48,32 @@ runs:
             echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
             ALL_PROTECTED=false
           else
-            # Verify branch protection rules exist
-            PROTECTION_ENABLED=$(echo "$BODY" | jq '.required_status_checks | .contexts | length > 0')
-            if [ "$PROTECTION_ENABLED" = "false" ]; then
-              echo "ERROR: Branch '$BRANCH' exists but does not have branch protection rules set."
+            # # Verify branch protection rules exist
+            # PROTECTION_ENABLED=$(echo "$BODY" | jq '.required_status_checks | .contexts | length > 0')
+            # if [ "$PROTECTION_ENABLED" = "false" ]; then
+            #   echo "ERROR: Branch '$BRANCH' exists but does not have branch protection rules set."
+            #   ALL_PROTECTED=false
+            # else
+            #   echo "SUCCESS: Branch '$BRANCH' is protected."
+            # fi
+            # Get the required status checks contexts
+            CONTEXTS=$(echo "$BODY" | jq -r '.required_status_checks.contexts // [] | .[]')
+
+            # Check if any context contains the job_name (partial match)
+            MATCH_FOUND=false
+            for CONTEXT in $CONTEXTS; do
+              if [[ "$CONTEXT" == *"${{ inputs.job_name }}"* ]]; then
+                MATCH_FOUND=true
+                break
+              fi
+            done
+
+            # If no match was found, throw an error
+            if [ "$MATCH_FOUND" = false ]; then
+              echo "ERROR: Job '${{ inputs.job_name }}' is not listed in the required status checks for '$BRANCH'."
               ALL_PROTECTED=false
             else
-              echo "SUCCESS: Branch '$BRANCH' is protected."
+              echo "SUCCESS: Job '${{ inputs.job_name }}' is listed in the required status checks for '$BRANCH'."
             fi
           fi
           echo "--------------------------------------"

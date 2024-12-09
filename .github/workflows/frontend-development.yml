@@ -27,6 +27,10 @@ on:
         required: true
         type: string
         description: "Name for the pm2 process"
+      path:
+        required: true
+        type: string
+        description: "Path to the project"
     secrets:
       password:
         required: true
@@ -43,6 +47,7 @@ jobs:
       destination: ${{ inputs.destination }}
       fingerprint: ${{ inputs.fingerprint }}
       pm2_name: ${{ inputs.pm2_name }}
+      path: ${{ inputs.path }}
     secrets:
       password: ${{ secrets.password }}
       dotenv_key: ${{ secrets.dotenv_key }} 

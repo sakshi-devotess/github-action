@@ -22,6 +22,9 @@ on:
             pm2_name:
                 type: string
                 required: true
+            path:
+                type: string
+                required: true
         secrets:
             dotenv_key:
                 required: true

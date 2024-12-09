@@ -28,9 +28,10 @@ on:
         type: string
         description: "Name for the pm2 process"
       path:
-        required: true
+        required: false
         type: string
         description: "Path to the project"
+        default: 'dist'
     secrets:
       password:
         required: true

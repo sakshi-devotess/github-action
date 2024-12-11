@@ -15,91 +15,123 @@ runs:
   steps:
     - name: Parse Branches and Check Protection
       shell: bash
+      # run: |
+          
       run: |
-          echo "Checking account type..."
+        # Fetch repository details
+        REPO_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+          --location "https://api.github.com/repos/${{ inputs.repository }}" \
+          --header 'Accept: application/vnd.github+json' \
+          --header "Authorization: Bearer ${{ inputs.token }}")
 
-          RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-            --location "https://api.github.com/user" \
+        REPO_BODY=$(echo "$REPO_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+        REPO_STATUS=$(echo "$REPO_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+        if [ "$REPO_STATUS" -ne 200 ]; then
+          echo "ERROR: Unable to fetch repository details: $REPO_BODY"
+          exit 1
+        fi
+
+        # Extract owner type and plan
+        OWNER_TYPE=$(echo "$REPO_BODY" | jq -r '.owner.type')
+        OWNER_LOGIN=$(echo "$REPO_BODY" | jq -r '.owner.login')
+
+        echo "Repository Owner: $OWNER_LOGIN"
+        echo "Owner Type: $OWNER_TYPE"
+
+        if [ "$OWNER_TYPE" = "Organization" ]; then
+          # Fetch organization details
+          ORG_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+            --location "https://api.github.com/orgs/$OWNER_LOGIN" \
             --header 'Accept: application/vnd.github+json' \
             --header "Authorization: Bearer ${{ inputs.token }}")
 
-          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
-          STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          ORG_BODY=$(echo "$ORG_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          ORG_STATUS=$(echo "$ORG_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-          if [ "$STATUS" -eq 200 ]; then
-            ACCOUNT_TYPE=$(echo "$BODY" | jq -r '.type')
-            echo "Account Type: $ACCOUNT_TYPE"
-
-            if [ "$ACCOUNT_TYPE" != "Pro" ]; then
-              echo "::set-output name=run_prettier::false"
-              echo "This is not a Pro account. Skipping branch protection rules and Prettier run."
-              exit 0
-            fi
-
-            echo "Checking branch protection rules..."
-            RULE_COUNT=$(curl --silent --location "https://api.github.com/repos/${{ github.repository }}/branches/main/protection" \
-              --header 'Accept: application/vnd.github+json' \
-              --header "Authorization: Bearer ${{ inputs.token }}" | jq '.required_status_checks.contexts | length')
-
-            echo "Branch protection rules count: $RULE_COUNT"
-
-            if [ "$RULE_COUNT" -lt 3 ]; then
-              echo "::set-output name=run_prettier::false"
-              echo "Branch protection does not have at least 3 rules. Skipping Prettier run."
-              exit 0
-            fi
-
-            echo "::set-output name=run_prettier::true"
-          else
-            echo "ERROR: Unable to determine account type or check rules. HTTP Status: $STATUS"
+          if [ "$ORG_STATUS" -ne 200 ]; then
+            echo "ERROR: Unable to fetch organization details: $ORG_BODY"
             exit 1
           fi
-      # run: |
-      #   # Get the input branches and split into an array
-      #   IFS=',' read -r -a BRANCHES <<< "${{ inputs.branches }}"
-      #   ALL_PROTECTED=true
 
-      #   for BRANCH in "${BRANCHES[@]}"; do
-      #     echo "--------------------------------------"
-      #     echo "Checking branch protection for: $BRANCH"
-          
-      #     # Fetch branch protection details
-      #     RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-      #       --location "https://api.github.com/repos/${{ inputs.repository }}/branches/$BRANCH/protection" \
-      #       --header 'Accept: application/vnd.github+json' \
-      #       --header "Authorization: Bearer ${{ inputs.token }}")
-          
-      #     # Extract HTTP status and body
-      #     BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
-      #     STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          PLAN=$(echo "$ORG_BODY" | jq -r '.plan.name')
+        else
+          # Fetch user details
+          USER_RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+            --location "https://api.github.com/users/$OWNER_LOGIN" \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${{ inputs.token }}")
 
-      #     echo "HTTP Status: $STATUS"
-      #     echo "Response Body: $BODY"
+          USER_BODY=$(echo "$USER_RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          USER_STATUS=$(echo "$USER_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-      #     # Check if the branch exists and has protection
-      #     if [ "$STATUS" -eq 404 ]; then
-      #       echo "ERROR: Branch '$BRANCH' does not exist or does not have branch protection enabled."
-      #       ALL_PROTECTED=false
-      #     elif [ "$STATUS" -ne 200 ]; then
-      #       echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
-      #       ALL_PROTECTED=false
-      #     else
-      #       # Verify branch protection rules exist
-      #       PROTECTION_ENABLED=$(echo "$BODY" | jq '.required_status_checks | .contexts | length > 3')
-      #       if [ "$PROTECTION_ENABLED" = "false" ]; then
-      #         echo "ERROR: Branch '$BRANCH' exists but does not have branch protection rules set."
-      #         ALL_PROTECTED=false
-      #       else
-      #         echo "SUCCESS: Branch '$BRANCH' is protected."
-      #       fi
-      #     fi
-      #     echo "--------------------------------------"
-      #   done
+          if [ "$USER_STATUS" -ne 200 ]; then
+            echo "ERROR: Unable to fetch user details: $USER_BODY"
+            exit 1
+          fi
 
-      #   # Final check
-      #   if [ "$ALL_PROTECTED" = false ]; then
-      #     echo "ERROR: One or more branches do not exist or do not have branch protection enabled."
-      #     exit 1
-      #   fi
+          PLAN=$(echo "$USER_BODY" | jq -r '.plan.name')
+        fi
 
-      #   echo "SUCCESS: All specified branches are protected."
+        echo "Account Plan: $PLAN"
+
+        if [ "$PLAN" = "free" ]; then
+          echo "Account is on a Free plan. Skipping branch protection checks."
+          exit 0
+        else
+          echo "Account is on a Pro or Enterprise plan. Proceeding with branch protection checks."
+        fi
+        
+
+        # Get the input branches and split into an array
+        IFS=',' read -r -a BRANCHES <<< "${{ inputs.branches }}"
+        ALL_PROTECTED=true
+
+        for BRANCH in "${BRANCHES[@]}"; do
+          echo "--------------------------------------"
+          echo "Checking branch protection for: $BRANCH"
+
+          # Fetch branch protection details
+          RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+            --location "https://api.github.com/repos/${{ inputs.repository }}/branches/$BRANCH/protection" \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${{ inputs.token }}")
+
+          # Extract HTTP status and body
+          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+          STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+
+          echo "HTTP Status: $STATUS"
+          echo "Response Body: $BODY"
+
+          # Check if the branch exists and has protection
+          if [ "$STATUS" -eq 404 ]; then
+            echo "ERROR: Branch '$BRANCH' does not exist or does not have branch protection enabled."
+            ALL_PROTECTED=false
+          elif [ "$STATUS" -ne 200 ]; then
+            echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
+            ALL_PROTECTED=false
+          else
+            # Verify branch protection rules exist
+            REQUIRED_CHECKS_COUNT=$(echo "$BODY" | jq '.required_status_checks | .contexts | length')
+            echo "Required Status Checks Count: $REQUIRED_CHECKS_COUNT"
+
+            if [ "$REQUIRED_CHECKS_COUNT" -lt 3 ]; then
+              echo "ERROR: Branch '$BRANCH' does not have at least 3 required status checks. Found: $REQUIRED_CHECKS_COUNT."
+              ALL_PROTECTED=false
+            else
+              echo "SUCCESS: Branch '$BRANCH' is protected with $REQUIRED_CHECKS_COUNT required status checks."
+            fi
+          fi
+          echo "--------------------------------------"
+        done
+
+        # Final check
+        if [ "$ALL_PROTECTED" = false ]; then
+          echo "ERROR: One or more branches do not exist or do not have branch protection enabled."
+          exit 1
+        fi
+
+        echo "SUCCESS: All specified branches are protected."
+       
+        

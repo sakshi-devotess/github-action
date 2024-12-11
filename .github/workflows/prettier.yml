@@ -36,7 +36,7 @@ jobs:
       #     fi
 
       - name: Check Branch Protection
-        uses: 'SaaS-Innova/github-action@main'
+        uses: 'sakshi-devotess/github-action@main'
         with:
           repository: ${{ github.repository }}
           token: ${{ secrets.token }}

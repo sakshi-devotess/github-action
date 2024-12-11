@@ -9,15 +9,10 @@ on:
         required: false
         default: '--check **/*.tsx'
         type: string
-      # jobs_to_check:
-      #   description: 'Comma-separated list of required jobs'
-      #   required: false
-      #   default: 'prettier'
-      #   type: string
     secrets:
       token:
         description: 'Token to use for GitHub API'
-        required: true
+        required: false
 
 jobs:
   prettier:
@@ -28,117 +23,24 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
-        
+      
+      # - name: Set GitHub Token
+      #   id: set-token
+      #   run: |
+      #     if [ -z "${{ secrets.token }}" ]; then
+      #       echo "Using default GITHUB_TOKEN."
+      #       echo "::set-output name=token::${{ secrets.token }}"
+      #     else
+      #       echo "Using provided token."
+      #       echo "::set-output name=token::${{ secrets.PERSONAL_TOKEN_FOR_WORKFLOW }}"
+      #     fi
+
       - name: Check Branch Protection
-        uses: 'sakshi-devotess/github-action@main'
+        uses: 'SaaS-Innova/github-action@main'
         with:
           repository: ${{ github.repository }}
-          job_name: 'prettier'
           token: ${{ secrets.token }}
           branches: 'main,development'
-
-      # - name: Check branch protection using GitHub Script
-      #   id: check-branch-protection
-      #   run: |
-      #     curl --location 'https://api.github.com/repos/${{ inputs.repository }}/branches/main/protection' \
-      #       --header 'Accept: application/vnd.github+json' \
-      #       --header "Authorization: Bearer ${{ secrets.token }}"
-
-      # - name: Check branch protection for required status checks
-      #   id: check-protection
-      #   run: |
-      #     repository='${{ inputs.repository }}'
-      #     jobs_to_check='${{ inputs.jobs_to_check }}'
-      #     IFS=',' read -r -a jobs <<< "$jobs_to_check"
-          
-      #     # Extract owner and repo from the repository input
-      #     owner=$(echo "$repository" | cut -d'/' -f1)
-      #     repo=$(echo "$repository" | cut -d'/' -f2)
-
-      #     # Fetch branch protection details
-      #     response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-      #       --location "https://api.github.com/repos/$repository/branches/main/protection" \
-      #       --header 'Accept: application/vnd.github+json' \
-      #       --header "Authorization: Bearer ${{ secrets.token }}")
-          
-      #     body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
-      #     status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-
-      #     # Exit if branch protection is not enabled
-      #     if [ "$status" -eq 404 ]; then
-      #       echo "Branch protection not enabled for 'main'."
-      #       exit 1
-      #     elif [ "$status" -ne 200 ]; then
-      #       echo "Failed to fetch branch protection details: $body"
-      #       exit 1
-      #     fi
-
-      #     # Extract required status checks
-      #     required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
-
-      #     if [ -z "$required_checks" ]; then
-      #       echo "No required status checks configured for 'main'."
-      #       exit 1
-      #     fi
-      #     echo "Required status checks: $required_checks"
-
-      #     # Check if all jobs are in required checks
-      #     for job in "${jobs[@]}"; do
-      #       if [[ ! " ${required_checks[@]} " =~ " $job " ]]; then
-      #         echo "Job '$job' is NOT listed under required status checks."
-      #         exit 1
-      #       fi
-      #     done
-
-      #     echo "All specified jobs are listed under required status checks."
-      # - name: Set Job Name Environment Variable
-      #   run: echo "JOB_NAME=prettier" >> $GITHUB_ENV
-
-      # - name: Check branch protection for required status checks
-      #   id: check-protection
-      #   run: |
-      #     repository='${{ inputs.repository }}'
-      #     job_name="${JOB_NAME}"
-          
-      #     # Extract owner and repo from the repository input
-      #     owner=$(echo "$repository" | cut -d'/' -f1)
-      #     repo=$(echo "$repository" | cut -d'/' -f2)
-
-      #     # Fetch branch protection details
-      #     response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-      #       --location "https://api.github.com/repos/$repository/branches/main/protection" \
-      #       --header 'Accept: application/vnd.github+json' \
-      #       --header "Authorization: Bearer ${{ secrets.token }}")
-          
-      #     body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
-      #     status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-
-      #     # Exit if branch protection is not enabled
-      #     if [ "$status" -eq 404 ]; then
-      #       echo "Branch protection not enabled for 'main'."
-      #       exit 1
-      #     elif [ "$status" -ne 200 ]; then
-      #       echo "Failed to fetch branch protection details: $body"
-      #       exit 1
-      #     fi
-
-      #     # Extract required status checks
-      #     required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
-
-      #     if [ -z "$required_checks" ]; then
-      #       echo "No required status checks configured for 'main'."
-      #       exit 1
-      #     fi
-      #     echo "Required status checks: $required_checks"
-
-      #     # Check if the current job is in required checks
-      #     if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
-      #       echo "Job '$job_name' is NOT listed under required status checks."
-      #       exit 1
-      #     fi
-
-      #     echo "Current job '$job_name' is listed under required status checks."
-
 
       - name: Prettify code
         uses: creyD/prettier_action@v4.3

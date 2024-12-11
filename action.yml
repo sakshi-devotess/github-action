@@ -4,9 +4,6 @@ inputs:
   repository:
     description: 'The repository to check for branch protection'
     required: true
-  job_name:
-    description: 'The job name to check against branch protection'
-    required: true
   token:
     description: 'GitHub token to authenticate'
     required: true
@@ -19,93 +16,90 @@ runs:
     - name: Parse Branches and Check Protection
       shell: bash
       run: |
-        # Get the input branches and split into an array
-        IFS=',' read -r -a BRANCHES <<< "${{ inputs.branches }}"
-        ALL_PROTECTED=true
+          echo "Checking account type..."
 
-        for BRANCH in "${BRANCHES[@]}"; do
-          echo "--------------------------------------"
-          echo "Checking branch protection for: $BRANCH"
-          
-          # Fetch branch protection details
           RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-            --location "https://api.github.com/repos/${{ inputs.repository }}/branches/$BRANCH/protection" \
+            --location "https://api.github.com/user" \
             --header 'Accept: application/vnd.github+json' \
             --header "Authorization: Bearer ${{ inputs.token }}")
-          
-          # Extract HTTP status and body
-          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+
+          BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS:.*//g')
           STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-          echo "HTTP Status: $STATUS"
-          echo "Response Body: $BODY"
+          if [ "$STATUS" -eq 200 ]; then
+            ACCOUNT_TYPE=$(echo "$BODY" | jq -r '.type')
+            echo "Account Type: $ACCOUNT_TYPE"
 
-          # Check if the branch exists and has protection
-          if [ "$STATUS" -eq 404 ]; then
-            echo "ERROR: Branch '$BRANCH' does not exist or does not have branch protection enabled."
-            ALL_PROTECTED=false
-          elif [ "$STATUS" -ne 200 ]; then
-            echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
-            ALL_PROTECTED=false
-          else
-            # Verify branch protection rules exist
-            PROTECTION_ENABLED=$(echo "$BODY" | jq '.required_status_checks | .contexts | length > 0')
-            if [ "$PROTECTION_ENABLED" = "false" ]; then
-              echo "ERROR: Branch '$BRANCH' exists but does not have branch protection rules set."
-              ALL_PROTECTED=false
-            else
-              echo "SUCCESS: Branch '$BRANCH' is protected."
+            if [ "$ACCOUNT_TYPE" != "Pro" ]; then
+              echo "::set-output name=run_prettier::false"
+              echo "This is not a Pro account. Skipping branch protection rules and Prettier run."
+              exit 0
             fi
+
+            echo "Checking branch protection rules..."
+            RULE_COUNT=$(curl --silent --location "https://api.github.com/repos/${{ github.repository }}/branches/main/protection" \
+              --header 'Accept: application/vnd.github+json' \
+              --header "Authorization: Bearer ${{ inputs.token }}" | jq '.required_status_checks.contexts | length')
+
+            echo "Branch protection rules count: $RULE_COUNT"
+
+            if [ "$RULE_COUNT" -lt 3 ]; then
+              echo "::set-output name=run_prettier::false"
+              echo "Branch protection does not have at least 3 rules. Skipping Prettier run."
+              exit 0
+            fi
+
+            echo "::set-output name=run_prettier::true"
+          else
+            echo "ERROR: Unable to determine account type or check rules. HTTP Status: $STATUS"
+            exit 1
           fi
-          echo "--------------------------------------"
-        done
+      # run: |
+      #   # Get the input branches and split into an array
+      #   IFS=',' read -r -a BRANCHES <<< "${{ inputs.branches }}"
+      #   ALL_PROTECTED=true
 
-        # Final check
-        if [ "$ALL_PROTECTED" = false ]; then
-          echo "ERROR: One or more branches do not exist or do not have branch protection enabled."
-          exit 1
-        fi
+      #   for BRANCH in "${BRANCHES[@]}"; do
+      #     echo "--------------------------------------"
+      #     echo "Checking branch protection for: $BRANCH"
+          
+      #     # Fetch branch protection details
+      #     RESPONSE=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
+      #       --location "https://api.github.com/repos/${{ inputs.repository }}/branches/$BRANCH/protection" \
+      #       --header 'Accept: application/vnd.github+json' \
+      #       --header "Authorization: Bearer ${{ inputs.token }}")
+          
+      #     # Extract HTTP status and body
+      #     BODY=$(echo "$RESPONSE" | sed -e 's/HTTPSTATUS\:.*//g')
+      #     STATUS=$(echo "$RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 
-        echo "SUCCESS: All specified branches are protected."
-    # - name: Check branch protection for required status checks
-    #   shell: bash
-    #   run: |
-    #     repository='${{ inputs.repository }}'
-    #     job_name='${{ inputs.job_name }}'
-    #     target_branch='${{ inputs.target_branch }}'
-    #     echo "repo : $repository"
-    #     echo "Checking branch protection for PR target branch: $target_branch"
-    #     # Fetch branch protection details
-    #     response=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" \
-    #       --location "https://api.github.com/repos/$repository/branches/$target_branch/protection" \
-    #       --header 'Accept: application/vnd.github+json' \
-    #       --header "Authorization: Bearer ${{ inputs.token }}")
-        
-    #     body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
-    #     status=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+      #     echo "HTTP Status: $STATUS"
+      #     echo "Response Body: $BODY"
 
-    #     # Exit if branch protection is not enabled
-    #     if [ "$status" -eq 404 ]; then
-    #       echo "Branch protection not enabled for '$target_branch'."
-    #       exit 1
-    #     elif [ "$status" -ne 200 ]; then
-    #       echo "Failed to fetch branch protection details: $body"
-    #       exit 1
-    #     fi
+      #     # Check if the branch exists and has protection
+      #     if [ "$STATUS" -eq 404 ]; then
+      #       echo "ERROR: Branch '$BRANCH' does not exist or does not have branch protection enabled."
+      #       ALL_PROTECTED=false
+      #     elif [ "$STATUS" -ne 200 ]; then
+      #       echo "ERROR: Failed to fetch branch protection details for '$BRANCH': $BODY"
+      #       ALL_PROTECTED=false
+      #     else
+      #       # Verify branch protection rules exist
+      #       PROTECTION_ENABLED=$(echo "$BODY" | jq '.required_status_checks | .contexts | length > 3')
+      #       if [ "$PROTECTION_ENABLED" = "false" ]; then
+      #         echo "ERROR: Branch '$BRANCH' exists but does not have branch protection rules set."
+      #         ALL_PROTECTED=false
+      #       else
+      #         echo "SUCCESS: Branch '$BRANCH' is protected."
+      #       fi
+      #     fi
+      #     echo "--------------------------------------"
+      #   done
 
-    #     # Extract required status checks
-    #     required_checks=$(echo "$body" | jq -r '.required_status_checks.contexts // [] | .[]')
+      #   # Final check
+      #   if [ "$ALL_PROTECTED" = false ]; then
+      #     echo "ERROR: One or more branches do not exist or do not have branch protection enabled."
+      #     exit 1
+      #   fi
 
-    #     if [ -z "$required_checks" ]; then
-    #       echo "No required status checks configured for '$target_branch'."
-    #       exit 1
-    #     fi
-    #     echo "Required status checks: $required_checks"
-
-    #     # Check if the current job is in required checks
-    #     if [[ ! " ${required_checks[@]} " =~ " $job_name " ]]; then
-    #       echo "Job '$job_name' is NOT listed under required status checks."
-    #       exit 1
-    #     fi
-
-    #     echo "Current job '$job_name' is listed under required status checks."
+      #   echo "SUCCESS: All specified branches are protected."

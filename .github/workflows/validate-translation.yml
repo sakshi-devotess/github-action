@@ -1,0 +1,32 @@
+name: 'Validate Translation Action'
+
+on:
+  workflow_call: 
+    secrets:
+      token_for_github_api:
+        description: 'Token to use for GitHub API'
+        required: true
+
+jobs:
+  validate-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Branch Protection & General Repository Settings
+        uses: 'SaaS-Innova/github-action@main'
+        with:
+          repository: ${{ github.repository }}
+          token_for_github_api: ${{ secrets.token_for_github_api }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run translation validation script
+        run: node SaaS-Innova/github-action/.github/scripts/validate-translations.js@main

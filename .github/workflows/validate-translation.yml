@@ -28,5 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Debug - List Files
+        run: ls -R .github/scripts
+
       - name: Run translation validation script
-        run: node '.github/scripts/validate-translations.js'
+        run: node '../github/scripts/validate-translations.js'

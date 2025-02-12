@@ -22,7 +22,7 @@ jobs:
 
         - name: Validate translation files
           run: |
-            export I18N_PATH="${GITHUB_WORKSPACE}/parent-repo/src/i18n"
+            export I18N_PATH="${GITHUB_WORKSPACE}/src/i18n"
             echo "Using I18N_PATH: $I18N_PATH"
             node sakshi-devotess/github-action/.github/scripts/validate-translations.js
 

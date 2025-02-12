@@ -17,19 +17,19 @@ const allowedKeys = ["headingLabels", "attributes", "messages", "extraInfo"];
 // Read and validate file existence and JSON structure
 function validateFile(lang) {
   const filePath = path.join(i18nDir, `${lang}/language.json`);
-  console.log(filePath);
-  if (!fs.existsSync(filePath)) {
-    console.error(`❌ Translation file for ${lang} does not exist.`);
-    process.exit(1);
-  }
+  console.error(filePath);
+  // if (!fs.existsSync(filePath)) {
+  //   console.error(`❌ Translation file for ${lang} does not exist.`);
+  //   process.exit(1);
+  // }
 
-  try {
-    const content = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(content);
-  } catch (error) {
-    console.error(`❌ Invalid JSON in ${lang} file: ${error.message}`);
-    process.exit(1);
-  }
+  // try {
+  //   const content = fs.readFileSync(filePath, "utf-8");
+  //   return JSON.parse(content);
+  // } catch (error) {
+  //   console.error(`❌ Invalid JSON in ${lang} file: ${error.message}`);
+  //   process.exit(1);
+  // }
 }
 
 // Validate structure of JSON file

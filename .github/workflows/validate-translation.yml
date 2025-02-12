@@ -20,11 +20,22 @@ jobs:
         - name: Debug file existence
           run: ls -R sakshi-devotess/github-action/.github/scripts
 
-        - name: Validate translation files
+        # - name: Validate translation files
+        #   run: |
+        #     export I18N_PATH="${GITHUB_WORKSPACE}/src/i18n"
+        #     echo "Using I18N_PATH: $I18N_PATH"
+        #     node sakshi-devotess/github-action/.github/scripts/validate-translations.js
+
+        - name: Detect Parent Repo Path
           run: |
-            export I18N_PATH="${GITHUB_WORKSPACE}/src/i18n"
-            echo "Using I18N_PATH: $I18N_PATH"
-            node sakshi-devotess/github-action/.github/scripts/validate-translations.js
+            echo "Detecting repo path inside GITHUB_WORKSPACE..."
+            PARENT_REPO_PATH=$(find $GITHUB_WORKSPACE -maxdepth 1 -type d | grep -v 'github-action' | grep -v '^$GITHUB_WORKSPACE$' | head -n 1)
+            echo "Detected Parent Repo Path: $PARENT_REPO_PATH"
+            echo "PARENT_REPO_PATH=$PARENT_REPO_PATH" >> $GITHUB_ENV
+
+        - name: Validate translation files
+          run: node sakshi-devotess/github-action/.github/scripts/validate-translations.js "$PARENT_REPO_PATH/src/i18n"
+
 
 
 

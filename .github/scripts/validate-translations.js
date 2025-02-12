@@ -3,7 +3,7 @@ const path = require("path");
 
 const languages = ["en", "sv"];
 const i18nDir = path.join(process.env.GITHUB_WORKSPACE, "src/i18n");
-console.log(i18nDir);
+
 const requiredTopLevelKeys = [
   "menu",
   "objects",
@@ -17,6 +17,7 @@ const allowedKeys = ["headingLabels", "attributes", "messages", "extraInfo"];
 // Read and validate file existence and JSON structure
 function validateFile(lang) {
   const filePath = path.join(i18nDir, `${lang}/language.json`);
+  console.log(filePath);
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Translation file for ${lang} does not exist.`);
     process.exit(1);

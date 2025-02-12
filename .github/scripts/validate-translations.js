@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const languages = ["en", "sv"];
-const i18nDir = path.join("${{ github.repository }}", "src/i18n");
+const i18nDir = path.join(process.env.I18N_PATH, "src/i18n");
 
 const requiredTopLevelKeys = [
   "menu",

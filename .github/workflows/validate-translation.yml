@@ -24,8 +24,8 @@ jobs:
 
         - name: Checkout reusable workflow repository
           uses: actions/checkout@v3
-          # with:
-          #   repository: 'sakshi-devotess/github-action'
+          with:
+            repository: 'sakshi-devotess/github-action'
           #   path: 'sakshi-devotess/github-action'
 
         - name: Debug file existence

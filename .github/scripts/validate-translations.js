@@ -1,18 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const languages = ['en', 'sv'];
-const i18nDir = path.join(__dirname, '../../src/i18n');
+const languages = ["en", "sv"];
+const i18nDir = path.join(process.env.GITHUB_WORKSPACE, "src/i18n");
 
 const requiredTopLevelKeys = [
-  'menu',
-  'objects',
-  'components',
-  'metadata',
-  'auth',
+  "menu",
+  "objects",
+  "components",
+  "metadata",
+  "auth",
 ];
 
-const allowedKeys = ['headingLabels', 'attributes', 'messages', 'extraInfo'];
+const allowedKeys = ["headingLabels", "attributes", "messages", "extraInfo"];
 
 // Read and validate file existence and JSON structure
 function validateFile(lang) {
@@ -23,7 +23,7 @@ function validateFile(lang) {
   }
 
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const content = fs.readFileSync(filePath, "utf-8");
     return JSON.parse(content);
   } catch (error) {
     console.error(`❌ Invalid JSON in ${lang} file: ${error.message}`);
@@ -37,46 +37,46 @@ function validateObjectStructure(jsonObj) {
 
   // Check for missing keys
   const missingKeys = requiredTopLevelKeys.filter(
-    (key) => !actualKeys.includes(key),
+    (key) => !actualKeys.includes(key)
   );
   if (missingKeys.length > 0) {
     console.error(
-      `❌ Missing required top-level keys: ${missingKeys.join(', ')}`,
+      `❌ Missing required top-level keys: ${missingKeys.join(", ")}`
     );
     return false;
   }
 
   // Check for unexpected keys
   const unexpectedKeys = actualKeys.filter(
-    (key) => !requiredTopLevelKeys.includes(key),
+    (key) => !requiredTopLevelKeys.includes(key)
   );
   if (unexpectedKeys.length > 0) {
     console.error(
-      `❌ Unexpected top-level keys found: ${unexpectedKeys.join(', ')}`,
+      `❌ Unexpected top-level keys found: ${unexpectedKeys.join(", ")}`
     );
     return false;
   }
 
-  if (!jsonObj?.objects || typeof jsonObj.objects !== 'object') {
+  if (!jsonObj?.objects || typeof jsonObj.objects !== "object") {
     throw new Error("Invalid JSON structure: Missing 'objects' key.");
   }
 
   const invalidEntries = [];
 
   Object.entries(jsonObj.objects).forEach(([key, value]) => {
-    if (typeof value !== 'object') return;
+    if (typeof value !== "object") return;
     const invalidKeys = Object.keys(value).filter(
-      (k) => !allowedKeys.includes(k),
+      (k) => !allowedKeys.includes(k)
     );
     if (invalidKeys.length) invalidEntries.push({ key, invalidKeys });
   });
 
   if (invalidEntries.length) {
-    console.error('❌ Invalid keys found in translation objects:');
-    console.error(`👀 Allowed keys are: ${allowedKeys.join(', ')}`);
+    console.error("❌ Invalid keys found in translation objects:");
+    console.error(`👀 Allowed keys are: ${allowedKeys.join(", ")}`);
     invalidEntries.forEach(({ key, invalidKeys }) => {
       console.error(
-        `  - Object '${key}': Invalid keys: ${invalidKeys.join(', ')}`,
+        `  - Object '${key}': Invalid keys: ${invalidKeys.join(", ")}`
       );
     });
     return false;
@@ -94,14 +94,14 @@ function validateKeysAndValues(jsonObj) {
   const seenKeys = new Set();
   let isValid = true;
 
-  function traverse(obj, prefix = '') {
+  function traverse(obj, prefix = "") {
     Object.entries(obj).forEach(([key, value]) => {
       const fullKey = `${prefix}${key}`;
 
       // Validate that keys are in camelCase
       if (!isCamelCase(key)) {
         console.error(
-          `❌ Key '${fullKey}' is not in camelCase or contains invalid characters.`,
+          `❌ Key '${fullKey}' is not in camelCase or contains invalid characters.`
         );
         isValid = false;
       }
@@ -114,21 +114,21 @@ function validateKeysAndValues(jsonObj) {
         seenKeys.add(fullKey);
       }
 
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         // Allow capital letters in 'components' and 'messages' keys
         const allowCapitalization =
-          fullKey.startsWith('components.') || fullKey.includes('.messages.');
+          fullKey.startsWith("components.") || fullKey.includes(".messages.");
 
         // Validate that values are entirely lowercase
-        value = value.replace(/\{\{[^}]+\}\}/g, ''); // Remove variables
+        value = value.replace(/\{\{[^}]+\}\}/g, ""); // Remove variables
 
         if (!allowCapitalization && value !== value.toLowerCase()) {
           console.error(
-            `❌ Value for key '${fullKey}' contains uppercase characters: '${value}'.`,
+            `❌ Value for key '${fullKey}' contains uppercase characters: '${value}'.`
           );
           isValid = false;
         }
-      } else if (typeof value === 'object' && value !== null) {
+      } else if (typeof value === "object" && value !== null) {
         // Recurse for nested objects
         traverse(value, `${fullKey}.`);
       }
@@ -140,11 +140,11 @@ function validateKeysAndValues(jsonObj) {
 }
 
 // Extract all keys from nested objects
-function extractKeys(obj, prefix = '') {
+function extractKeys(obj, prefix = "") {
   return Object.entries(obj).flatMap(([key, value]) =>
-    typeof value === 'object' && value !== null
+    typeof value === "object" && value !== null
       ? extractKeys(value, `${prefix}${key}.`)
-      : `${prefix}${key}`,
+      : `${prefix}${key}`
   );
 }
 
@@ -157,11 +157,11 @@ function validateKeyConsistency(enData, svData) {
   const missingInEn = svKeys.filter((key) => !enKeys.includes(key));
 
   if (missingInSv.length || missingInEn.length) {
-    console.error('❌ Key mismatch between translations:');
+    console.error("❌ Key mismatch between translations:");
     if (missingInSv.length)
-      console.error(`  - Missing in 'sv': ${missingInSv.join(', ')}`);
+      console.error(`  - Missing in 'sv': ${missingInSv.join(", ")}`);
     if (missingInEn.length)
-      console.error(`  - Missing in 'en': ${missingInEn.join(', ')}`);
+      console.error(`  - Missing in 'en': ${missingInEn.join(", ")}`);
     return false;
   }
 
@@ -193,10 +193,10 @@ function validateTranslations() {
   if (!validateKeyConsistency(files.en, files.sv)) allValid = false;
 
   if (allValid) {
-    console.log('✅ All validations passed!');
+    console.log("✅ All validations passed!");
     process.exit(0);
   } else {
-    console.error('❌ Validation failed.');
+    console.error("❌ Validation failed.");
     process.exit(1);
   }
 }

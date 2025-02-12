@@ -17,20 +17,6 @@ jobs:
             repository: 'sakshi-devotess/github-action'
             path: 'sakshi-devotess/github-action'
 
-        - name: Debug File System
-          run: |
-            echo "Current workspace: $GITHUB_WORKSPACE"
-            echo "Checking if i18n directory exists..."
-            if [ -d "${{ env.I18N_PATH }}" ]; then
-              echo "✅ i18n directory exists!"
-              echo "Listing contents of i18n directory:"
-              ls -R ${{ env.I18N_PATH }}
-            else
-              echo "❌ ERROR: i18n directory does NOT exist!"
-              exit 1
-            fi
-
-
         - name: Debug file existence
           run: ls -R sakshi-devotess/github-action/.github/scripts
 

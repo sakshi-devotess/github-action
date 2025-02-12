@@ -23,6 +23,15 @@ jobs:
             repository: 'SaaS-Innova/github-action'
             path: 'SaaS-Innova/github-action'
 
+        - name: Debug File System
+          run: |
+            echo "Current workspace:"
+            pwd
+            echo "List files in workspace:"
+            ls -R
+            echo "List i18n directory (if it exists):"
+            ls -R src/i18n || echo "❌ src/i18n directory not found"
+
         - name: Debug file existence
           run: ls -R SaaS-Innova/github-action/.github/scripts
 

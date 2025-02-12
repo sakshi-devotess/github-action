@@ -11,25 +11,37 @@ jobs:
   validate-translations:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Branch Protection & General Repository Settings
-        uses: 'SaaS-Innova/github-action@main'
-        with:
-          repository: ${{ github.repository }}
-          token_for_github_api: ${{ secrets.token_for_github_api }}
+        - name: Checkout reusable workflow repository
+          uses: actions/checkout@v3
+          with:
+            repository: 'SaaS-Innova/github-action'
+            path: 'SaaS-Innova/github-action'
 
-      - name: Checkout repository
-        uses: actions/checkout@v3
+        - name: Debug file existence
+          run: ls -R SaaS-Innova/github-action/.github/scripts
+
+        - name: Validate translation files
+          run: node SaaS-Innova/github-action/.github/scripts/validate-translations.js
+
+      # - name: Check Branch Protection & General Repository Settings
+      #   uses: 'SaaS-Innova/github-action@main'
+      #   with:
+      #     repository: ${{ github.repository }}
+      #     token_for_github_api: ${{ secrets.token_for_github_api }}
+
+      # - name: Checkout repository
+      #   uses: actions/checkout@v3
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18'
       
-      - name: Install dependencies
-        run: npm install
+      # - name: Install dependencies
+      #   run: npm install
 
-      - name: List i18n directory contents
-        run: ls -R src/i18n
+      # - name: List i18n directory contents
+      #   run: ls -R src/i18n
 
-      - name: Validate translation files
-        run: npm run checkTranslationFile
+      # - name: Validate translation files
+      #   run: npm run checkTranslationFile

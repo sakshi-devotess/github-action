@@ -11,6 +11,12 @@ jobs:
   validate-translations:
     runs-on: ubuntu-latest
     steps:
+        - name: Check Branch Protection & General Repository Settings
+          uses: 'SaaS-Innova/github-action@main'
+          with:
+            repository: ${{ github.repository }}
+            token_for_github_api: ${{ secrets.token_for_github_api }}
+
         - name: Checkout calling repository (Main Repo)
           uses: actions/checkout@v3
           with:
@@ -18,9 +24,9 @@ jobs:
 
         - name: Checkout reusable workflow repository
           uses: actions/checkout@v3
-          with:
-            repository: 'sakshi-devotess/github-action'
-            path: 'sakshi-devotess/github-action'
+          # with:
+          #   repository: 'sakshi-devotess/github-action'
+          #   path: 'sakshi-devotess/github-action'
 
         - name: Debug file existence
           run: |

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const languages = ["en", "sv"];
-const i18nDir = process.env.I18N_PATH;
+const i18nDir = process.argv[2];
 
 const requiredTopLevelKeys = [
   "menu",

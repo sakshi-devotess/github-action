@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Check Branch Protection & General Repository Settings
-          uses: 'SaaS-Innova/github-action@main'
+          uses: 'sakshi-devotess/github-action@main'
           with:
             repository: ${{ github.repository }}
             token_for_github_api: ${{ secrets.token_for_github_api }}
@@ -20,8 +20,8 @@ jobs:
         - name: Checkout reusable workflow repository
           uses: actions/checkout@v3
           with:
-            repository: 'SaaS-Innova/github-action'
-            path: 'SaaS-Innova/github-action'
+            repository: 'sakshi-devotess/github-action'
+            path: 'sakshi-devotess/github-action'
 
         - name: Debug File System
           run: |
@@ -33,10 +33,10 @@ jobs:
             ls -R src/i18n || echo "❌ src/i18n directory not found"
 
         - name: Debug file existence
-          run: ls -R SaaS-Innova/github-action/.github/scripts
+          run: ls -R sakshi-devotess/github-action/.github/scripts
 
         - name: Validate translation files
-          run: node SaaS-Innova/github-action/.github/scripts/validate-translations.js
+          run: node sakshi-devotess/github-action/.github/scripts/validate-translations.js
 
       # - name: Check Branch Protection & General Repository Settings
       #   uses: 'SaaS-Innova/github-action@main'

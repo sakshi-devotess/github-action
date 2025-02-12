@@ -3,7 +3,7 @@ const path = require("path");
 
 const languages = ["en", "sv"];
 const i18nDir = path.join(process.env.GITHUB_WORKSPACE, "src/i18n");
-
+console.log(i18nDir);
 const requiredTopLevelKeys = [
   "menu",
   "objects",

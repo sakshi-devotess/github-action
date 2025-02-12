@@ -19,12 +19,17 @@ jobs:
 
         - name: Debug File System
           run: |
-            echo "Current workspace:"
-            pwd
-            echo "List files in workspace:"
-            ls -R
-            echo "List i18n directory (if it exists):"
-            ls -R src/i18n || echo "❌ src/i18n directory not found"
+            echo "Current workspace: $GITHUB_WORKSPACE"
+            echo "Checking if i18n directory exists..."
+            if [ -d "${{ env.I18N_PATH }}" ]; then
+              echo "✅ i18n directory exists!"
+              echo "Listing contents of i18n directory:"
+              ls -R ${{ env.I18N_PATH }}
+            else
+              echo "❌ ERROR: i18n directory does NOT exist!"
+              exit 1
+            fi
+
 
         - name: Debug file existence
           run: ls -R sakshi-devotess/github-action/.github/scripts
@@ -32,7 +37,9 @@ jobs:
         - name: Validate translation files
           run: node sakshi-devotess/github-action/.github/scripts/validate-translations.js
           env:
-            I18N_PATH: ${{ github.repository }}/src/i18n
+            I18N_PATH: ${{ process.env.GITHUB_WORKSPACE }}/src/i18n
+
+        
 
       # - name: Check Branch Protection & General Repository Settings
       #   uses: 'SaaS-Innova/github-action@main'

@@ -37,7 +37,7 @@ jobs:
         - name: Validate translation files
           run: node sakshi-devotess/github-action/.github/scripts/validate-translations.js
           env:
-            I18N_PATH: ${{ process.env.GITHUB_WORKSPACE }}/src/i18n
+            I18N_PATH: $GITHUB_WORKSPACE/src/i18n
 
         
 

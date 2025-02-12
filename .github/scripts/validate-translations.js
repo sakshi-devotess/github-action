@@ -17,7 +17,7 @@ const allowedKeys = ["headingLabels", "attributes", "messages", "extraInfo"];
 // Read and validate file existence and JSON structure
 function validateFile(lang) {
   const filePath = path.join(i18nDir, `${lang}/language.json`);
-  console.log(filePath);
+  console.error(filePath);
   if (!fs.existsSync(filePath)) {
     console.error(`❌ Translation file for ${lang} does not exist.`);
     process.exit(1);

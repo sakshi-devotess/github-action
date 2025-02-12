@@ -13,9 +13,9 @@ jobs:
     steps:
         - name: Checkout reusable workflow repository
           uses: actions/checkout@v3
-          with:
-            repository: 'SaaS-Innova/github-action'
-            path: 'SaaS-Innova/github-action'
+          # with:
+          #   repository: 'SaaS-Innova/github-action'
+          #   path: 'SaaS-Innova/github-action'
 
         - name: Debug file existence
           run: ls -R SaaS-Innova/github-action/.github/scripts

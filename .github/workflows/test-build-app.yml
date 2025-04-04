@@ -35,32 +35,26 @@ jobs:
           token: ${{ secrets.token_for_github_api }}
           submodules: true
 
-      # Update references
-      - name: Git Submodule Update
+      - name: Create .env file
         run: |
-          git submodule init
-          git submodule update --remote --recursive
+          echo "REACT_APP_GRAPHQL_URL=${{ inputs.graphql_url }}" > .env
+          echo "REACT_APP_PUBLIC_URL=${{ inputs.public_url }}" >> .env
+          if [ -n "${{ inputs.document_server_url }}" ]; then
+            echo "REACT_APP_DOCUMENT_SERVER_URL=${{ inputs.document_server_url }}" >> .env
+          fi
 
-      # - name: Create .env file
-      #   run: |
-      #     echo "REACT_APP_GRAPHQL_URL=${{ inputs.graphql_url }}" > .env
-      #     echo "REACT_APP_PUBLIC_URL=${{ inputs.public_url }}" >> .env
-      #     if [ -n "${{ inputs.document_server_url }}" ]; then
-      #       echo "REACT_APP_DOCUMENT_SERVER_URL=${{ inputs.document_server_url }}" >> .env
-      #     fi
+      - name: Setup Node.js 20
+        id: install-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.6.1
+          cache: 'npm'
 
-      # - name: Setup Node.js 20
-      #   id: install-node
-      #   uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 20.6.1
-      #     cache: 'npm'
+      - name: Install Dependencies
+        run: npm install
 
-      # - name: Install Dependencies
-      #   run: npm install
+      - name: Build Application
+        run: npm run build
 
-      # - name: Build Application
-      #   run: npm run build
-
-      # - name: Run Tests
-      #   run: npm run test
+      - name: Run Tests
+        run: npm run test

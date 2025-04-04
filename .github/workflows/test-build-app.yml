@@ -11,17 +11,34 @@ on:
         required: true
         type: string
         description: 'The public URL for the React app'
+      document_server_url:
+        required: false
+        type: string
+        description: 'The Document Server URL (optional)'
+    secrets:
+      token_for_github_api:
+        description: 'Token to use for GitHub API'
+        required: true
 
 jobs:
   test-build:
     runs-on: ubuntu-22.04
     steps:
+      # - name: Check Branch Protection & General Repository Settings
+      #   uses: 'SaaS-Innova/github-action@main'
+      #   with:
+      #     repository: ${{ github.repository }}
+      #     token_for_github_api: ${{ secrets.token_for_github_api }}
+
       - uses: actions/checkout@v3
 
       - name: Create .env file
         run: |
           echo "REACT_APP_GRAPHQL_URL=${{ inputs.graphql_url }}" > .env
           echo "REACT_APP_PUBLIC_URL=${{ inputs.public_url }}" >> .env
+          if [ -n "${{ inputs.document_server_url }}" ]; then
+            echo "REACT_APP_DOCUMENT_SERVER_URL=${{ inputs.document_server_url }}" >> .env
+          fi
 
       - name: Setup Node.js 20
         id: install-node

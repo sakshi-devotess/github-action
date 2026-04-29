@@ -1,0 +1,58 @@
+name: Claude PR Review
+
+on:
+  workflow_call:
+    inputs:
+      review_prompt:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      anthropic_api_key:
+        required: true
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude PR Review
+        uses: anthropics/claude-code-action@v1
+
+        with:
+          anthropic_api_key: ${{ secrets.anthropic_api_key }}
+          track_progress: true
+          show_full_output: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Act as a senior software engineer performing a strict PR review.
+
+            Review this pull request and:
+            - Identify bugs, edge cases, and potential failures
+            - Detect bad practices and anti-patterns
+            - Suggest improvements in code structure and design
+            - Highlight performance and security concerns
+            - Recommend cleaner, more maintainable approaches
+
+            IMPORTANT:
+            - Ignore all existing PR comments
+            - Always provide suggestions, even if code seems correct
+            - Prefer specific, actionable feedback over general statements
+            - Include improved code snippets when applicable
+
+            Add inline comments on specific lines wherever relevant.
+
+            Avoid vague feedback. Be precise and technical.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*)"

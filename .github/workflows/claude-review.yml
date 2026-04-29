@@ -10,6 +10,8 @@ on:
     secrets:
       anthropic_api_key:
         required: true
+      token:
+        required: false
 
 jobs:
   claude-review:
@@ -30,6 +32,7 @@ jobs:
 
         with:
           anthropic_api_key: ${{ secrets.anthropic_api_key }}
+          github_token: ${{ secrets.token }}
           track_progress: true
           show_full_output: true
           prompt: |
